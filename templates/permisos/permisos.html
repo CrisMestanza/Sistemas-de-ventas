@@ -1,0 +1,162 @@
+{% extends 'plantilla/base.html' %}
+{% block main %}
+<main id="main" class="main">
+  <div class="pagetitle">
+    <h1>Permisos</h1>
+    <nav>
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+        <li class="breadcrumb-item active">Permisos</li>
+      </ol>
+    </nav>
+  </div><!-- End Page Title -->
+
+  <section class="section dashboard">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Permisos</h5>
+            <button type="" class="btn btn-success"  data-bs-toggle="modal"
+              data-bs-target="#myModaAgregar">Agregar permiso
+            </button>
+              
+              <table class="table datatable">
+                <thead>
+                  <tr>
+
+                    <th scope="col">CODIGO</th>
+                    <th scope="col">Tipo usuario</th>
+                    <th scope="col">Permisos</th>
+                    <th scope="col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for tipo_usuario, permisos2 in permisos_por_tipo_usuario %}
+                    <tr>
+              
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ tipo_usuario }}</td>
+                        <td>
+                            {% for permiso in permisos2 %}
+                                {{ permiso.idmodulo.nombremodulo }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                    <td>
+                      <a type="button" id="btnEditar" class="btn" data-bs-toggle="modal" data-bs-target="#myModal2{{permisos2.0.idtipousuario.idtipousuario}} ">
+                        <i class="fa-solid fa-pen-to-square fa-2xl" style="color: #005eff;"></i>
+                      </a>
+                      <a href="{% url 'eliminarPermiso' id=permisos2.0.idtipousuario.idtipousuario %}" class="eliminar"
+                       >
+                        <i class="fa-solid fa-trash fa-2xl" style="color: #f71b02;"></i>
+                      </a>
+                    </td>
+                     <!-- Modales de editar -->
+                     <div class="modal fade" id="myModal2{{permisos2.0.idtipousuario.idtipousuario}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h4 class="modal-title">Editar categoria</h4>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            <form id="formEditarCategoria {{permisos2.0.idtipousuario.idtipousuario}}" action="{% url 'editarCategorias' %}" method="post" enctype="multipart/form-data">
+                              <p>{{permisos2.0.idtipousuario.idtipousuario}}</p>
+                              {% csrf_token %}
+                              <div class="form-group">
+                                <label for="nombreProducto2"><strong>Nombre</strong></label>
+                                <input type="text" name="nameCategoria" value="{{ categorias_registro.nomcategoria }}" class="form-control">
+                                <input type="hidden" name="idCategoria" value="{{ categorias_registro.idcategoria }}">
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary btn-editar" data-id="{{ categorias_registro.idcategoria }}">Guardar</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                      <!-- fin del modal editar -->
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              
+             
+              
+
+
+            <!-- Modal de Agregar -->
+            <div class="modal" id="myModaAgregar">
+              <div class="modal-dialog">
+                <div class="modal-content">
+
+                  <!-- Cabecera del modal -->
+                  <div class="modal-header">
+                    <h4 class="modal-title">Crear permiso</h4>
+                    <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                  </div>
+
+                  <!-- Contenido del modal De editar-->
+                  <div class="modal-body">
+
+                    <!-- inicio de form -->
+
+                    <form id="formAgregarCategoria" action="{% url 'agregaPermiso' %}" method="post" enctype="multipart/form-data">
+                      {% csrf_token %}
+                      <h5 for="nombreProducto2">Selecciones el tipo de usuario</h5><br>
+                      <select name="tipoUsuario" id="tipoUsuario" class="form-control">
+                        <option value="">Seleccione el tipo de usuario</option>
+                        {% for tipoUsuario in tipoUsuarios %}
+                        <option value="{{tipoUsuario.idtipousuario}}">{{tipoUsuario.nombretipousuario}}</option>
+                        {% endfor %}
+                      </select>
+                      <br>
+                      <h5 for="nombreProducto2">Selecciones los permisos</h5>
+                      <br>
+
+                      {% for modulo in modulos %}
+                      <input class="form-check-input" type="checkbox" value=" {{modulo.idmodulo}}" id=" {{modulo.idmodulo}}" name="permisosTu[idmodulo][]">
+                      <label class="form-check-label" for=" {{modulo.idmodulo}}">
+                        {{modulo.nombremodulo}}
+                      </label><br>
+                      {% endfor %}
+                      <div style="display:flex; margin-left:140px;">
+                          <div class="modal-footer">
+                              <button type="submit" class="btn btn-success" id="agregar">Agregar</button>
+                          </div>
+                          <div class="modal-footer">
+                              <button type="button" id="btn-info" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                          </div>
+                      </div>
+                    </form>
+                  
+
+                  <!-- fin del form -->
+
+                </div>
+
+                <!-- Pie del modal -->
+
+              </div>
+            </div>
+
+            <!-- Fin del modal agregar-->
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main><!-- End #main -->
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+
+</script>
+{% endblock %}

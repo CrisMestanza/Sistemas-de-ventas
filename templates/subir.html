@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Subir</h1>
+    <form action="{% url 'subido' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="imagen" >
+        <input type="file" name="pdf" >
+        <button class="btn btn-dark my-4" type="submit">Procesar Formulario</button>
+    </form>
+</body>
+</html>
