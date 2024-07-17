@@ -44,6 +44,14 @@ from software.models.DepatamentoIgvModel import Detalletipoigvxdepartamento
 from openpyxl import Workbook
 from django.db.models import Sum
 from openpyxl.utils import get_column_letter
+
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import os
+from django.conf import settings
+from django.templatetags.static import static
+
+
 # Create your views here.
 import requests
 import json
@@ -746,3 +754,54 @@ def enviarSunat(request, id):
 
 
     return HttpResponse("request")
+
+
+def pdf_ticket(request):
+    # Datos estáticos para el ticket
+    empresa = {
+        'nombre': 'Empresa XYZ',
+        'direccion': '123 Calle Principal',
+        'telefono': '123-456-7890'
+    }
+    cabecera = {
+        'fecha': '2024-07-16',
+        'tipo_documento': 'Factura',
+        'serie': 'F001',
+        'numero': '0001',
+        'total_a_pagar': '100.00',
+        'moneda': 'USD'
+    }
+    total_letras = 'Son: Cien con 00/100 USD'
+
+    # Crear el PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="ticket.pdf"'
+
+    # Tamaño de 80 mm x 200 mm
+    width = 80 * 2.83
+    height = 200 * 2.83
+    p = canvas.Canvas(response, pagesize=(width, height))
+
+    # Agregar imagen
+    image_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'empresa', 'logo.png')
+    
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"No se encontró la imagen en {image_path}")
+
+    p.drawImage(image_path, 10, height - 100, width=60, height=60)  # Ajusta posición y tamaño
+
+    # Agregar contenido al PDF
+    p.drawString(10, height - 20, f"Ticket de Venta - {empresa['nombre']}")
+    p.drawString(10, height - 40, f"Dirección: {empresa['direccion']}")
+    p.drawString(10, height - 60, f"Teléfono: {empresa['telefono']}")
+    p.drawString(10, height - 80, f"Fecha: {cabecera['fecha']}")
+    p.drawString(10, height - 100, f"Tipo de Documento: {cabecera['tipo_documento']}")
+    p.drawString(10, height - 120, f"Serie: {cabecera['serie']}")
+    p.drawString(10, height - 140, f"Número: {cabecera['numero']}")
+    p.drawString(10, height - 160, f"Total a Pagar: {cabecera['total_a_pagar']} {cabecera['moneda']}")
+    p.drawString(10, height - 180, total_letras)
+
+    p.showPage()
+    p.save()
+
+    return response
