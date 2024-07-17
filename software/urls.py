@@ -119,4 +119,6 @@ urlpatterns = [
     path('transacciones/editar', transaccion.editar_Transaccion, name="transaccionEditar"),
 
 
+    path('generar_ticket/', ventas.pdf_ticket, name='generar_ticket'),
+
 ]
