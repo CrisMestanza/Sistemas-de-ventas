@@ -59,6 +59,8 @@ urlpatterns = [
     path('ventas/buscarFechaVentas', ventas.buscarFechaVentas, name="buscarFechaVentas"),
     path('ventas/enviarSunat/<int:id>', ventas.enviarSunat, name='enviarSunat'),
     path('compras/export', ventas.export_to_excel_ventas, name='export_to_excel_ventas'),
+    
+    path('eliminar-venta-detalle/<int:id>/', ventas.eliminarVentaDetalle, name='eliminar_venta_detalle'),
 
     #categorias
     path('categorias', categorias.categorias, name="categorias"),

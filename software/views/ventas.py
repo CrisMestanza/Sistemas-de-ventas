@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.db import connection
 from software.views.apiBusquedaRUcDni import ApisNetPe
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 import templates
 from software.models.comprasModel import Compras
 
@@ -315,6 +315,37 @@ def eliminarVentas(request, id):
     Venta.objects.filter(idventa=id).update(estado=0)
 
     return redirect('ventas')
+
+
+def eliminarVentaDetalle(request, id):
+    if request.method == 'GET':
+        id2 = request.session.get('idtipousuario')
+        if id2:
+            permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id2)
+
+            # Recuperar el objeto VentaDetalle que se va a eliminar
+            venta_detalle = get_object_or_404(VentaDetalle, idventadetalle=id)
+            
+            # Recuperar el id de la venta asociada al VentaDetalle
+            id_venta = venta_detalle.idventa_id # Accede al id de la venta asociada al detalle
+
+            # Recuperar el producto asociado al detalle de venta
+            producto = get_object_or_404(Producto, idproducto=venta_detalle.idproducto_id)
+
+
+            # Actualizar el stock del producto
+            producto.stockactual += venta_detalle.cantidad
+            producto.save()
+            
+            # Eliminar el objeto VentaDetalle
+            venta_detalle.delete()
+
+            return redirect('editarVenta', id=id_venta)
+        
+        return JsonResponse({'error': 'No autorizado'}, status=403)
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
 
 
 def editarVenta(request, id):

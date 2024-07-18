@@ -173,7 +173,7 @@
                                         </td>
                                         
                                         <td>
-                                            <button type="button" id="" class="btn btn-danger">Eliminar</button>
+                                            <a href="{% url 'eliminar_venta_detalle' ventas_detalle.idventadetalle %}" class="btn btn-danger btn-eliminar-detalle" data-id="{{ detalle.idventadetalle }}">ELIMINAR</a>
                                         </td>
                                     </tr>
                                     
@@ -232,6 +232,32 @@
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
 <script>
+
+$(document).ready(function() {
+        $('.eliminar-btn').click(function() {
+            var id = $(this).data('id');
+            var csrfToken = '{{ csrf_token }}';  // Asegúrate de que el token CSRF esté disponible
+
+            if (confirm('¿Estás seguro de que deseas eliminar este detalle de venta?')) {
+                $.ajax({
+                    url: '{% url "eliminar_venta_detalle" 0 %}'.replace('0', id),
+                    type: 'POST',
+                    data: {
+                        'csrfmiddlewaretoken': csrfToken
+                    },
+                    success: function(response) {
+                        // Manejar la respuesta de éxito, por ejemplo, eliminar la fila de la tabla
+                        alert('Detalle de venta eliminado exitosamente.');
+                        location.reload();  // Recargar la página para reflejar los cambios
+                    },
+                    error: function(response) {
+                        // Manejar errores
+                        alert('Hubo un error al eliminar el detalle de venta.');
+                    }
+                });
+            }
+        });
+    });
 
 
     $(function () {
