@@ -77,7 +77,8 @@
                                 </div>
                                 <div class="input-group" id="compra">
                                     <label class="input-group-text">Tipo igv:</label>
-                                    <input type="text" name="serie" id="serie" value="{{ventas.id_tipo_igv.tipo_igv}}" class="form-control" readonly>
+                                    <input type="text" name="serie"  value="{{ventas.id_tipo_igv.tipo_igv}}" class="form-control" readonly>
+                                    <input type="hidden" id="tipoIgv" value="{{ventas.id_tipo_igv.id_tipo_igv}}" class="form-control" readonly>
 
                                     
                                 </div>
@@ -101,6 +102,7 @@
                                         <th>Nombre</th>
 
                                         <th scope="col">Unid. Medida </th>
+                                        <th scope="col">Stock del producto</th>
                                         <th scope="col">Cantidad a vender</th>
 
                                         <th scope="col">Precio Unitario </th>
@@ -116,12 +118,10 @@
                                         
                                         <td>
                                             <div class="input-group">
-                                                <input value="{{ventas_detalle.idproducto.idproducto}}" class="form-control busqueda " type="hidden" list="opcionesBusqueda" aria-label="With textarea" name="producto[idproducto][]">
+                                                <input value="{{ventas_detalle.idproducto.idproducto}}"  type="hidden" name="producto[idproducto][]">
 
                                                 
                                                 <input value="{{ventas_detalle.idproducto.nomproducto}}" class="form-control busqueda " type="list" list="opcionesBusqueda" aria-label="With textarea" name="producto[nombre][]">
-                                                
-                                                <input value="{{ventas_detalle.idproducto.idproducto}}" class="form-control busqueda " type="hidden" list="opcionesBusqueda" aria-label="With textarea" name="producto[idproducto][]">
                                                 
                                                 <datalist id="opcionesBusqueda">
                                                     
@@ -133,12 +133,20 @@
                                         <td>
                                             <div class="input-group">  
                                                
-                                                <input type="hidden" value="{{ventas_detalle.idproducto.idunidad}}" class="form-control" id="cantidad" name="producto[unidad][]" aria-label="With textarea">
-                                                <input type="text" readonly value="{{ventas_detalle.idproducto.idunidad.abrunidad}}" class="form-control" id="cantidad"  aria-label="With textarea">
+                                                <input type="hidden" value="{{ventas_detalle.idproducto.idunidad}}" class="form-control" name="producto[unidad][]" aria-label="With textarea">
+                                                <input type="text" readonly value="{{ventas_detalle.idproducto.idunidad.abrunidad}}" class="form-control"   aria-label="With textarea">
                                                 
                                             </div>   
                                         </td>
                                         
+                                        <td>
+                                            <div class="input-group">
+                                                
+                                                <input value="{{ventas_detalle.idproducto.stockactual}}" id="stockActual" type="number" class="form-control"  aria-label="With textarea" readonly>
+    
+                                            </div>
+    
+                                        </td>
                                         <td>
                                             <div class="input-group">
                                                 
@@ -193,6 +201,19 @@
                                         </div>
                                         <!-- Agrega -->
                                         <div style="margin-left: 50px;" id="pagoTotalPagar">
+                                            <span><strong>Total Gravada: S/.</strong></span>
+                                            <input value="{{ventas.total_gravada_formateado}}" type="number" name="totalGravada" class="totalGravada form-control" readonly>
+                            
+                                            <span> <strong>Total Exonerada: S/.</strong> </span>
+                                            <input  value="{{ventas.total_exonerada_formateado}}" type="number" name="totalExonerada" class="totalExonerada form-control" readonly>
+                            
+                            
+                                            <span> <strong>Total igv:</strong>  </span>
+                                            <input  value="{{ventas.total_igv_formateado}}" type="number" name="totalIgv" class="totalIgv form-control" readonly>
+                            
+                                            <span> <strong>Pago Total: S/.</strong> </span>
+                                            <input  value="{{ventas.total_a_pagar_formateado}}" type="number" name="ventaTotal" class="ventaTotal form-control" readonly>
+                            
 
                                         </div>
                                     </div>
@@ -316,8 +337,10 @@
             nuevaFila += '<td><div class="input-group"><input class="form-control busqueda" type="list" list="opcionesBusqueda" aria-label="With textarea" name="producto[nombre][]"><datalist id="opcionesBusqueda"></datalist></div></td>';
 
             nuevaFila += '<input class="form-control busqueda " type="hidden" list="opcionesBusqueda" aria-label="With textarea" name="producto[idproducto][]"></div></td>';
-
+            
+            
             nuevaFila += '<td><div class="input-group"><select name="producto[unidad][]" id="unidad" class="form-control" aria-label="With textarea">'
+            nuevaFila += '<td><div class="input-group"><input class="form-control" type="number" readonly    id="stockActual"aria-label="With textarea"></div></td>'
 
             {% for unidad in unidades %}
             nuevaFila += '<option value="{{unidad.idunidad}}"> {{unidad.abrunidad}} </option>'
@@ -461,91 +484,40 @@ $("#guardar").click(function(){
 
             currentRow.find('#total').val(total);
 
-            calcularTotal();
-        });
 
-        // Calcular total de la venta
-        let calcularTotal = () => {
-            let total = 0;
+            let idTipo = $("#tipoIgv").val();
 
-            $('#tabla tbody #total').each(function (index, value) {
-                let idTipo = $("#tipo_igv").val();
-
-                let valor = parseFloat($(this).val());
-
-                if (!isNaN(valor)) {
-                    total += valor;
-                } else {
-                    console.error(`Valor no es un número: ${$(this).val()}`);
-                }
-            });
-
-            total = parseFloat(total.toFixed(2)); // Redondear a 2 decimales después de sumar
-
-            let idTipo = $("#tipo_igv").val();
+            $(".totalGravada").empty();
+            $(".totalIgv").empty();
+            $(".totalExonerada").empty();
+            $(".ventaTotal").empty();
 
             if (idTipo == 1) {
+                //Capturo el ig actual del nuevo producto y lo sumo al total IGV que ya tengo
+                let igvDelProductActual = parseFloat((total * 0.18)).toFixed(2);
+                //Nuevo igv ya sumado
+                let totalIgv = (parseFloat($(".totalIgv").val()) + parseFloat(igvDelProductActual)).toFixed(2); 
 
-                let igv = parseFloat((total * 0.18).toFixed(2));
-                let totalConIgv = parseFloat((total + igv).toFixed(2));
+                //Hago los nuevos calculos para los demás totales
+                let totalGravada = (parseFloat($(".totalGravada").val()) + parseFloat(total)).toFixed(2);
+                let totalConIgv = parseFloat((totalGravada + totalIgv)).toFixed(2);
+        
 
-                $(".totalGravada").val(total);
-                $(".totalIgv").val(igv);
-                $(".ventaTotal").val(totalConIgv);
+                $(".totalGravada").val(totalGravada);
+                $(".totalIgv").val(totalIgv);
                 $(".totalExonerada").val(0);
+                $(".ventaTotal").val(totalConIgv);
 
             } else if (idTipo == 9) {
-                $(".totalIgv").val(0);
-                $(".ventaTotal").val(0);
-                $(".totalGravada").val(0);
-                $(".totalExonerada").val(total);
-                $(".ventaTotal").val(total);
-            }
-        };
-
-        //Dependiendo de si selcciona gravado(1) o exonerada(9)
-        $("#tipo_igv").change(function () {
-            
-            id = $(this).val();
-            $('#pagoTotalPagar').empty();
-
-            if (id == 1) {
-
-                campos = '<span><strong>Total Gravada: S/.</strong></span>'
-                campos += '<input type="number" name="totalGravada" class="totalGravada form-control" readonly>'
-
-                campos += '<span> <strong>Total Exonerada: S/.</strong> </span>'
-                campos += '<input type="number" name="totalExonerada" class="totalExonerada form-control" readonly>'
-
-
-                campos += '<span> <strong>Total igv:</strong>  </span>'
-                campos += '<input type="number" name="totalIgv" class="totalIgv form-control" readonly>'
-
-                campos += '<span> <strong>Pago Total: S/.</strong> </span>'
-                campos += '<input type="number" name="ventaTotal" class="ventaTotal form-control" readonly>'
-
-                $('#pagoTotalPagar').append(campos)
+                totalIgv=  parseFloat($(".totalIgv").val(0)).toFixed(2);
+                ventaTotal= parseFloat($(".ventaTotal").val(0)).toFixed(2);
+                totalGravada= parseFloat($(".totalGravada").val(0)).toFixed(2);
+                totalExonerada= parseFloat($(".totalExonerada").val()).toFixed(2);
+                ventaTotal= parseFloat($(".ventaTotal").val()).toFixed(2);
             }
 
-            if (id == 9) {
+        });
 
-                campos = '<span><strong>Total Gravada: S/.</strong></span>'
-                campos += '<input type="number" name="totalGravada" class="totalGravada form-control" readonly>'
-
-                campos += '<span> <strong>Total Exonerada: S/.</strong> </span>'
-                campos += '<input type="number" name="totalExonerada" class="totalExonerada form-control" readonly>'
-
-
-                campos += '<span> <strong>Total igv:</strong>  </span>'
-                campos += '<input type="number" name="totalIgv" class="totalIgv form-control" readonly>'
-
-                campos += '<span> <strong>Pago Total: S/.</strong> </span>'
-                campos += '<input type="number" name="ventaTotal" class="ventaTotal form-control" readonly>'
-
-                $('#pagoTotalPagar').append(campos)
-
-            }
-        })
 
     });
 </script>

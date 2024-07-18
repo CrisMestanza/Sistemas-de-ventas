@@ -56,17 +56,17 @@ from django.templatetags.static import static
 import requests
 import json
 
+
 def ventas(request):
     id = request.session.get('idtipousuario')
 
     if id:
         permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id)
-        
 
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`total_a_pagar` AS `total`,
-                `venta`.`fechaemision`, `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`, `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`
+                `venta`.`fechaemision`, `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`, `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`
                 FROM `venta`
                 INNER JOIN `venta_detalle` ON (`venta`.`idventa` = `venta_detalle`.`idventa`)
                 INNER JOIN `numserie` ON (`venta`.`idnumserie` = `numserie`.`idnumserie`)
@@ -76,12 +76,13 @@ def ventas(request):
                 `numserie`.`numserie`, `venta`.`numcorrelativo`
             """)
             rows = cursor.fetchall()
-            
+
         request.session.get('idusuario')
 
-        return render(request, 'venta/venta.html', {'resultados': rows,"permisos":permisos})
+        return render(request, 'venta/venta.html', {'resultados': rows, "permisos": permisos})
     else:
         return HttpResponse("<h1>No tiene accedo señor</h1>")
+
 
 def agregar(request):
     id = request.session.get('idtipousuario')
@@ -92,11 +93,11 @@ def agregar(request):
         unidades = Unidades.objects.all()
         # tipo_igv = TipoIgv.objects.all()
         modoPago = Modopago.objects.all()
-        
+
         empresa = Empresa.objects.filter(idempresa=1).first()
         id_departamento = str(empresa.ubigueo)[:2]
 
-        #TIpo documento
+        # TIpo documento
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT d.nombredepartamento, ti.id_tipo_igv, ti.tipo_igv
@@ -106,14 +107,14 @@ def agregar(request):
                 WHERE d.iddepartamentos = %s
             """, [id_departamento])
             rows = cursor.fetchall()
-        
+
         data = {
             "tipoDocumentos": tipo_documentos,
             "unidades": unidades,
             "tipoClientes": tipo_cliente,
-            'rows':rows,
-            "modoPagos":modoPago,
-            "permisos":permisos
+            'rows': rows,
+            "modoPagos": modoPago,
+            "permisos": permisos
         }
         return render(request, 'venta/agregarVenta.html', data)
 
@@ -121,7 +122,8 @@ def agregar(request):
 def buscarSerie(request):
 
     doc = request.POST.get('doc')  # Acceder al valor 'doc' enviado por AJAX
-    get_numserie = Numserie.objects.filter(idtipodocumento=doc, estado=1, idusuario=request.session.get('idusuario'))
+    get_numserie = Numserie.objects.filter(
+        idtipodocumento=doc, estado=1, idusuario=request.session.get('idusuario'))
     serie_list = list(get_numserie.values())
     return JsonResponse(serie_list, safe=False)
 
@@ -130,18 +132,20 @@ def buscarProducto(request):
 
     if request.method == 'POST':
         busqueda = request.POST.get('busqueda')
-        
-        productos = Producto.objects.filter(nomproducto__icontains=busqueda, estado=1)
-        unidad = Unidades.objects.filter(idunidad=productos[0].idunidad.idunidad)
-        
-        unidad_list= list(unidad.values())
+
+        productos = Producto.objects.filter(
+            nomproducto__icontains=busqueda, estado=1)
+        unidad = Unidades.objects.filter(
+            idunidad=productos[0].idunidad.idunidad)
+
+        unidad_list = list(unidad.values())
         productos_list = list(productos.values())
-        
+
         response_data = {
-                        'productos': productos_list,
-                        'unidad': unidad_list,
-                        }
-        
+            'productos': productos_list,
+            'unidad': unidad_list,
+        }
+
         return JsonResponse(response_data, safe=False)
     return JsonResponse({'error': 'Método no permitido'}, status=400)
 
@@ -166,32 +170,31 @@ def ruc(request):
 
 
 def guardarVenta(request):
-    #Datos totales
+    # Datos totales
     totalGravada = request.POST.get('totalGravada')
     totalExonerada = request.POST.get('totalExonerada')
     totalIgv = request.POST.get('totalIgv')
     ventaTotal = request.POST.get('ventaTotal')
-    
 
-    #Obtener fecha actual
+    # Obtener fecha actual
     fechaNow = date.today()
-    
+
     # cliente
     docCliente = request.POST.get('doccliente')
     tipoCliente = request.POST.get('tipoCliente')
     nomcliente = request.POST.get('nomcliente')
     direccionCliente = request.POST.get('direccion')
     tipoPago = request.POST.get('tipoPago')
-    
-    #Para tipo pago 
+
+    # Para tipo pago
     getTipoPago = Modopago.objects.get(idmodoPago=tipoPago)
-    
-    #Para tipo entidad, dni o ruc
+
+    # Para tipo entidad, dni o ruc
     tipo_entidad = 0
     if int(tipoCliente) == 1:
         tipo_entidad = 2
-        
-    elif int(tipoCliente) == 2:   
+
+    elif int(tipoCliente) == 2:
         tipo_entidad = 1
 
     # Documento
@@ -206,14 +209,14 @@ def guardarVenta(request):
     precio_unitarios = request.POST.getlist('producto[precioUnitario][]')
     sub_totales = request.POST.getlist('producto[subTotal][]')
 
-    #Tipo igv
+    # Tipo igv
     tipo_igv = request.POST.get('tipo_igv')
-    
+
     getTipoIgv = TipoIgv.objects.get(id_tipo_igv=tipo_igv)
-    
-    #Empresa
+
+    # Empresa
     getEmpresa = Empresa.objects.get(idempresa=1)
-    
+
     # Obtener el numero correlativo y sumarlo +1
     GetNumcorrelativo = Venta.objects.filter(
         idnumserie=serie).order_by('-numcorrelativo').first()
@@ -228,7 +231,7 @@ def guardarVenta(request):
 
     for nombre, cantidad in zip(productos, cantidades):
         obtener_producto = Producto.objects.filter(nomproducto=nombre).first()
-        
+
         if obtener_producto:
             stockActual = obtener_producto.stockactual
 
@@ -238,15 +241,15 @@ def guardarVenta(request):
             return JsonResponse({"error": f"Producto {nombre} no encontrado"})
 
     if productos_sin_stock:
-        mensaje = "Falta stock para los siguientes productos:<br>-" + "<br>- ".join(productos_sin_stock)
+        mensaje = "Falta stock para los siguientes productos:<br>-" + \
+            "<br>- ".join(productos_sin_stock)
         return JsonResponse({"mensaje": mensaje})
-    
 
-    # Obtener tipo cliente 
+    # Obtener tipo cliente
     tipo_cliente = Tipocliente.objects.get(idtipocliente=tipoCliente)
-    #obtener tipo_entidad
-    getTipo_entidad =  TipoEntidad.objects.get(id_tipo_entidad=tipo_entidad)
-    #agregar cliente
+    # obtener tipo_entidad
+    getTipo_entidad = TipoEntidad.objects.get(id_tipo_entidad=tipo_entidad)
+    # agregar cliente
     cliente = Clientes.objects.create(idtipocliente=tipo_cliente, numdoc=docCliente,
                                       razonsocial=nomcliente, direccion=direccionCliente, estado=1,
                                       id_tipo_entidad=getTipo_entidad)
@@ -260,14 +263,14 @@ def guardarVenta(request):
     # Formatear la hora actual en formato HH:MM:SS
     hora_actual_formateada = hora_actual.strftime('%H:%M:%S')
 
-    venta_creada = Venta.objects.create(idnumserie=numserie, 
+    venta_creada = Venta.objects.create(idnumserie=numserie,
                                         numcorrelativo=nuevo_numcorrelativo,
-                                        idcliente=cliente, 
-                                        fechaemision=fechaNow, 
-                                        horaemision=hora_actual_formateada, 
-                                        estado=1, 
-                                        id_tipo_igv=getTipoIgv, 
-                                        idempresa = getEmpresa,
+                                        idcliente=cliente,
+                                        fechaemision=fechaNow,
+                                        horaemision=hora_actual_formateada,
+                                        estado=1,
+                                        id_tipo_igv=getTipoIgv,
+                                        idempresa=getEmpresa,
                                         idmodoPago=getTipoPago,
                                         total_gravada=totalGravada,
                                         total_igv=totalIgv,
@@ -277,25 +280,25 @@ def guardarVenta(request):
     # new_list= zip(productos,unidades,cantidades,precio_unitarios,sub_totales)
 
     for nombre, cantidad_subtotal, sub_total in zip(productos, cantidades, sub_totales):
-        
+
         obtener_producto = Producto.objects.filter(nomproducto=nombre).first()
         stockActual = obtener_producto.stockactual
         # if stockActual < int(cantidad_subtotal):
         #     return redirect('agregarVenta')
-        
+
         obtener_producto.stockactual = stockActual - int(cantidad_subtotal)
         obtener_producto.save()
-        
+
         # precio_subtotal= cantidad_subtotal*precio_unitario #Tal vez
         VentaDetalle.objects.create(idventa=venta_creada, idproducto=obtener_producto,
                                     cantidad=cantidad_subtotal, preciosubtotal=sub_total)
 
-    #Para transaccion
+    # Para transaccion
     ultimo_registro = Caja.objects.order_by('-id_caja').first()
-    
+
     caja = Caja.objects.get(id_caja=ultimo_registro.id_caja)
     tipoTransaccion = TipoTransaccion.objects.get(id_tipo_transaccion=1)
-    
+
     transaccion = Transaccion()
     transaccion.id_caja = caja
     transaccion.id_tipo_transaccion = tipoTransaccion
@@ -303,7 +306,7 @@ def guardarVenta(request):
     transaccion.fecha = fechaNow
     transaccion.hora = hora_actual_formateada
     transaccion.save()
-    
+
     return JsonResponse({"mensaje": "Venta exitosa"})
 
 
@@ -318,56 +321,53 @@ def editarVenta(request, id):
     id2 = request.session.get('idtipousuario')
     if id2:
         permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id2)
-        
+
         ventas = Venta.objects.get(pk=id)
         ventas_fechaemision = ventas.fechaemision.strftime('%Y-%m-%d')
-        
+
         ventas_detalles = VentaDetalle.objects.filter(idventa=id)
-        
-        #Registro de la empresa
+
+        # Registro de la empresa
         empresa = Empresa.objects.filter(idempresa=1).first()
-        
+
         id_departamento = str(empresa.ubigueo)[:2]
 
-        #TIpo documento
-        # with connection.cursor() as cursor:
-        #     cursor.execute("""
-        #         SELECT d.nombredepartamento, ti.id_tipo_igv, ti.tipo_igv
-        #         FROM facsiswave.detalletipoigvxdepartamento dp
-        #         INNER JOIN tipo_igvs ti ON ti.id_tipo_igv = dp.id_tipo_igv
-        #         INNER JOIN departamentos d ON d.iddepartamentos = dp.iddepartamentos
-        #         WHERE d.iddepartamentos = %s
-        #     """, [id_departamento])
-        #     rows = cursor.fetchall()
-            
         # Formatear preciounitario en cada detalle de venta
         for detalle in ventas_detalles:
-            detalle.preciounitario_formateado = str(detalle.idproducto.preciounitario).replace(',', '.')
+            detalle.preciounitario_formateado = str(
+                detalle.idproducto.preciounitario).replace(',', '.')
 
+
+        ventas.total_gravada_formateado = str(ventas.total_gravada).replace(',', '.')
+        ventas.total_exonerada_formateado = str(ventas.total_exonerada).replace(',', '.')
+        ventas.total_igv_formateado = str(ventas.total_igv).replace(',', '.')
+        ventas.total_a_pagar_formateado = str(ventas.total_a_pagar).replace(',', '.')
+
+        
         data = {
             'ventas': ventas,
             'ventas_detalles': ventas_detalles,
             'ventas_fechaemision': ventas_fechaemision,
-            "permisos":permisos,
+            "permisos": permisos,
             # "rows":rows
         }
 
         return render(request, 'venta/editarVenta.html', data)
-    
 
-def guardarEditar(request):    
-    #Datos totales
+
+def guardarEditar(request):
+    # Datos totales
     totalGravada = request.POST.get('totalGravada')
     totalExonerada = request.POST.get('totalExonerada')
     totalIgv = request.POST.get('totalIgv')
     ventaTotal = request.POST.get('ventaTotal')
-    
-    #Cliente
+
+    # Cliente
     docCliente = request.POST.get('doccliente')
     nomcliente = request.POST.get('nomcliente')
     direccionCliente = request.POST.get('direccion')
     idCliente = request.POST.get('idcliente')
-    
+
     nombres = request.POST.getlist('producto[nombre][]')
     cantidades = request.POST.getlist('producto[cantidad][]')
     precio_unitarios = request.POST.getlist('producto[precioUnitario][]')
@@ -377,11 +377,12 @@ def guardarEditar(request):
     id_venta = request.POST.get('idVenta')
 
     venta = Venta.objects.get(idventa=id_venta)
-    
+
     new_zip = zip(nombres, cantidades, precio_unitarios,
                   sub_totales, idproductos)
-
-    #Si ya existía el registro, edita, si no resta el stock del producto nuevo y agrega un nuevo registro de venta detalle
+    # print(idproductos)
+    print(idproductos)
+    # Si ya existía el registro, edita, si no resta el stock del producto nuevo y agrega un nuevo registro de venta detalle
     for nombre, cantidad, precio_unitario, subtotal, id_producto in new_zip:
         # Reemplaza las comas por puntos en el subtotal
         subtotal = subtotal.replace(',', '.')
@@ -394,51 +395,50 @@ def guardarEditar(request):
         if id_producto:
             venta_detalle = VentaDetalle.objects.filter(
                 idproducto=id_producto, idventa=venta).first()
-            
+
             if venta_detalle:
-                #Sumo la cantidad antes puesta y resto el nuevo
-                obtener_producto = Producto.objects.filter(nomproducto=nombre).first()
+                # Sumo la cantidad antes puesta y resto el nuevo
+                obtener_producto = Producto.objects.filter(
+                    nomproducto=nombre).first()
                 stockActual = obtener_producto.stockactual + venta_detalle.cantidad
                 obtener_producto.stockactual = stockActual - int(cantidad)
                 obtener_producto.save()
-                
-                #Actualizo datos en el detalle
+
+                # Actualizo datos en el detalle
                 venta_detalle.cantidad = cantidad_decimal
                 venta_detalle.preciosubtotal = subtotal_decimal
                 venta_detalle.save()
-        #else:        
-        if id_producto == '':
+        # else:
+        else:
             print("Entro a crear")
             # Si no hay id_producto, busca el producto por su nombre y resta el stock
             producto = Producto.objects.get(nomproducto=nombre)
             stockActual = producto.stockactual
             producto.stockactual = stockActual - int(cantidad)
             producto.save()
-            
+
             # Verifica si ya existe un registro para este producto en la venta actual
             venta_detalle_existente = VentaDetalle.objects.filter(
                 idproducto=producto, idventa=venta).exists()
-            
+
             if not venta_detalle_existente:
                 # Crea un nuevo registro solo si no existe un registro para este producto en la venta actual
                 VentaDetalle.objects.create(
                     idventa=venta, idproducto=producto, cantidad=cantidad_decimal, preciosubtotal=subtotal_decimal)
-             
-             
 
-    #Cliente
+    # Cliente
     getCliente = Clientes.objects.get(idcliente=idCliente)
     getCliente.numdoc = docCliente
     getCliente.razonsocial = nomcliente
     getCliente.direccion = direccionCliente
     getCliente.save()
-    #Editar totales de la venta
-    venta.total_gravada =totalGravada
+    # Editar totales de la venta
+    venta.total_gravada = totalGravada
     venta.total_igv = totalIgv
     venta.total_exonerada = totalExonerada
     venta.total_a_pagar = ventaTotal
     venta.save()
-    
+
     return redirect('ventas')
 
 
@@ -482,7 +482,7 @@ def export_to_excel_ventas(request):
     # Crear la fila de encabezado
     headers = ["Venta", "Cliente", "Total", "Fecha", "Doc"]
     sheet.append(headers)
-    
+
     # Ajustar el ancho de la columna de fecha
     fecha_columna = sheet.column_dimensions['D']
     fecha_columna.width = 15  # Ajustar el ancho de la columna de fecha
@@ -518,9 +518,6 @@ def export_to_excel_ventas(request):
     return response
 
 
-
-
-
 def custom_json_serializer(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
@@ -529,8 +526,6 @@ def custom_json_serializer(obj):
     elif isinstance(obj, decimal.Decimal):
         return float(obj)
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
-
-
 
 
 def enviarSunat(request, id):
@@ -591,9 +586,8 @@ def enviarSunat(request, id):
             WHERE
                 v.idventa = %s;
         """, [id])
-        
-        rows = cursor.fetchall()
 
+        rows = cursor.fetchall()
     # Inicializar la lista de items vacía
     items1 = []
 
@@ -611,11 +605,13 @@ def enviarSunat(request, id):
         items1.append(item)
 
     # Serializar fecha y hora
-    fecha_emision = custom_json_serializer(rows[0][17])  # Convertir fecha_emision
-    hora_emision = custom_json_serializer(rows[0][18])   # Convertir hora_emision
+    fecha_emision = custom_json_serializer(
+        rows[0][17])  # Convertir fecha_emision
+    hora_emision = custom_json_serializer(
+        rows[0][18])   # Convertir hora_emision
 
     # Envíar a SUNAT
-    url = "http://localhost/API_SUNAT/post.php"
+    url = "http://localhost/antiguo/API_SUNAT/post.php"
     payload = {
         "empresa": {
             "ruc": rows[0][0],
@@ -663,8 +659,8 @@ def enviarSunat(request, id):
     payload_json = json.dumps(payload, default=custom_json_serializer)
 
     # Enviar solicitud a SUNAT
-    response = requests.request("POST", url, headers=headers, data=payload_json)
-
+    response = requests.request(
+        "POST", url, headers=headers, data=payload_json)
 
     # Manejar la respuesta
     if response.status_code == 200:
@@ -678,10 +674,12 @@ def enviarSunat(request, id):
             ruta_xml = None
             ruta_cdr = None
             ruta_pdf = None
+            ruta_ticket = None
 
             # Buscar el valor de respuesta_sunat_codigo
             if '"respuesta_sunat_codigo":"' in response_text:
-                start_index = response_text.index('"respuesta_sunat_codigo":"') + len('"respuesta_sunat_codigo":"')
+                start_index = response_text.index(
+                    '"respuesta_sunat_codigo":"') + len('"respuesta_sunat_codigo":"')
                 end_index = response_text.index('"', start_index)
                 respuesta_codigo = response_text[start_index:end_index]
                 print("Respuesta SUNAT Código:", respuesta_codigo)
@@ -690,7 +688,8 @@ def enviarSunat(request, id):
 
             # Buscar el valor de respuesta_sunat_descripcion
             if '"respuesta_sunat_descripcion":"' in response_text:
-                start_index = response_text.index('"respuesta_sunat_descripcion":"') + len('"respuesta_sunat_descripcion":"')
+                start_index = response_text.index(
+                    '"respuesta_sunat_descripcion":"') + len('"respuesta_sunat_descripcion":"')
                 end_index = response_text.index('"', start_index)
                 respuesta_descripcion = response_text[start_index:end_index]
                 print("Respuesta SUNAT Descripción:", respuesta_descripcion)
@@ -699,7 +698,8 @@ def enviarSunat(request, id):
 
             # Buscar el valor de ruta_xml
             if '"ruta_xml":"' in response_text:
-                start_index = response_text.index('"ruta_xml":"') + len('"ruta_xml":"')
+                start_index = response_text.index(
+                    '"ruta_xml":"') + len('"ruta_xml":"')
                 end_index = response_text.index('"', start_index)
                 ruta_xml = response_text[start_index:end_index]
                 print("Ruta XML:", ruta_xml)
@@ -708,7 +708,8 @@ def enviarSunat(request, id):
 
             # Buscar el valor de ruta_cdr
             if '"ruta_cdr":"' in response_text:
-                start_index = response_text.index('"ruta_cdr":"') + len('"ruta_cdr":"')
+                start_index = response_text.index(
+                    '"ruta_cdr":"') + len('"ruta_cdr":"')
                 end_index = response_text.index('"', start_index)
                 ruta_cdr = response_text[start_index:end_index]
                 print("Ruta CDR:", ruta_cdr)
@@ -717,12 +718,23 @@ def enviarSunat(request, id):
 
             # Buscar el valor de ruta_pdf
             if '"ruta_pdf":"' in response_text:
-                start_index = response_text.index('"ruta_pdf":"') + len('"ruta_pdf":"')
+                start_index = response_text.index(
+                    '"ruta_pdf":"') + len('"ruta_pdf":"')
                 end_index = response_text.index('"', start_index)
                 ruta_pdf = response_text[start_index:end_index]
                 print("Ruta PDF:", ruta_pdf)
             else:
                 print("No se encontró ruta_pdf en la respuesta")
+
+            # Buscar el valor de ruta_ticket
+            if '"ruta_ticket":"' in response_text:
+                start_index = response_text.index(
+                    '"ruta_ticket":"') + len('"ruta_ticket":"')
+                end_index = response_text.index('"', start_index)
+                ruta_ticket1 = response_text[start_index:end_index]
+                print("Ruta TICKET:", ruta_ticket1)
+            else:
+                print("No se encontró ruta_ticket en la respuesta")
 
             # Crear el objeto de respuesta adecuado
             response_data = {
@@ -730,16 +742,24 @@ def enviarSunat(request, id):
                 'respuesta_descripcion': respuesta_descripcion,
                 'ruta_xml': ruta_xml,
                 'ruta_cdr': ruta_cdr,
-                'ruta_pdf': ruta_pdf
+                'ruta_pdf': ruta_pdf,
+                'ruta_ticket1': ruta_ticket1,
             }
-            
+
             getVenta = Venta.objects.get(idventa=id)
-            getVenta.ruta_pdf = response_data['ruta_pdf']  # Accede usando corchetes
-            getVenta.ruta_cdr = response_data['ruta_cdr']  # Accede usando corchetes
-            getVenta.respuesta_sunat_descripcion = response_data['respuesta_descripcion']  # Accede usando corchetes
-            getVenta.respuesta_sunat_codigo = response_data['respuesta_codigo']  # Accede usando corchetes
+            # Accede usando corchetes
+            getVenta.ruta_pdf = response_data['ruta_pdf']
+            # Accede usando corchetes
+            getVenta.ruta_ticket = response_data['ruta_ticket1']
+            # Accede usando corchetes
+            getVenta.ruta_cdr = response_data['ruta_cdr']
+            # Accede usando corchetes
+            getVenta.respuesta_sunat_descripcion = response_data['respuesta_descripcion']
+            # Accede usando corchetes
+            getVenta.respuesta_sunat_codigo = response_data['respuesta_codigo']
+
             getVenta.save()
-            
+
             return JsonResponse(response_data, safe=False)
 
         except Exception as e:
@@ -752,56 +772,4 @@ def enviarSunat(request, id):
         print("Contenido de la respuesta:", response.text)
         return HttpResponseServerError("Error en el servidor al enviar la solicitud a SUNAT")
 
-
     return HttpResponse("request")
-
-
-def pdf_ticket(request):
-    # Datos estáticos para el ticket
-    empresa = {
-        'nombre': 'Empresa XYZ',
-        'direccion': '123 Calle Principal',
-        'telefono': '123-456-7890'
-    }
-    cabecera = {
-        'fecha': '2024-07-16',
-        'tipo_documento': 'Factura',
-        'serie': 'F001',
-        'numero': '0001',
-        'total_a_pagar': '100.00',
-        'moneda': 'USD'
-    }
-    total_letras = 'Son: Cien con 00/100 USD'
-
-    # Crear el PDF
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="ticket.pdf"'
-
-    # Tamaño de 80 mm x 200 mm
-    width = 80 * 2.83
-    height = 200 * 2.83
-    p = canvas.Canvas(response, pagesize=(width, height))
-
-    # Agregar imagen
-    image_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'empresa', 'logo.png')
-    
-    if not os.path.exists(image_path):
-        raise FileNotFoundError(f"No se encontró la imagen en {image_path}")
-
-    p.drawImage(image_path, 10, height - 100, width=60, height=60)  # Ajusta posición y tamaño
-
-    # Agregar contenido al PDF
-    p.drawString(10, height - 20, f"Ticket de Venta - {empresa['nombre']}")
-    p.drawString(10, height - 40, f"Dirección: {empresa['direccion']}")
-    p.drawString(10, height - 60, f"Teléfono: {empresa['telefono']}")
-    p.drawString(10, height - 80, f"Fecha: {cabecera['fecha']}")
-    p.drawString(10, height - 100, f"Tipo de Documento: {cabecera['tipo_documento']}")
-    p.drawString(10, height - 120, f"Serie: {cabecera['serie']}")
-    p.drawString(10, height - 140, f"Número: {cabecera['numero']}")
-    p.drawString(10, height - 160, f"Total a Pagar: {cabecera['total_a_pagar']} {cabecera['moneda']}")
-    p.drawString(10, height - 180, total_letras)
-
-    p.showPage()
-    p.save()
-
-    return response

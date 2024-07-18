@@ -117,8 +117,4 @@ urlpatterns = [
     path('transacciones', transaccion.mostrar_Transaccion, name="MostrarTransaccion"),
     path('transacciones/agregar', transaccion.agregar_Transaccion, name="transaccionAgregar"),
     path('transacciones/editar', transaccion.editar_Transaccion, name="transaccionEditar"),
-
-
-    path('generar_ticket/', ventas.pdf_ticket, name='generar_ticket'),
-
 ]

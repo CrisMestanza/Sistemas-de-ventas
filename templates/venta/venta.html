@@ -47,6 +47,7 @@
                         <th scope="col">Total</th>
                         <th scope="col">Fecha</th>
                         <th scope="col">Doc</th>
+                        <th scope="col">Ticket</th>
                         <th scope="col">A4</th>
                         <th scope="col">CDR</th>
                         <!-- <th scope="col">Ticket</th> -->
@@ -68,7 +69,17 @@
                             <td>{{ resultado.3}}</td> <!-- Accediendo al cuarto elemento de la tupla para fechaemision -->
                             <td>{{ resultado.4 }}-{{ resultado.5 }}</td>
 
-                            
+                            <!-- Ticket -->
+                            <td>
+                              {% if resultado.10 %}
+                                <a  href="{{ resultado.10 }}" target="_blank">
+                                  <i class="fa-solid fa-ticket fa-2xl" style="color: #005eff; margin-left: 30px;"></i>
+                                </a>
+                              {% else %}
+                                  Falta envíar
+                              {% endif %}
+                            </td>
+                            <!-- PDF -->
                             <td>
                               {% if resultado.6 %}
                                 <a  href="{{ resultado.6 }}" target="_blank">
@@ -78,6 +89,7 @@
                                 Falta envíar
                               {% endif %}
                             </td>
+                     
                                      
                             <td>
                               {% if resultado.6 %}
