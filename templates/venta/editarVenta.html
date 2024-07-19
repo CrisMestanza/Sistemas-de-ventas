@@ -18,7 +18,7 @@
                     <div class="card-body">
                         <form action="" method="post" enctype="multipart/form-data" autocomplete="off">
                             {% csrf_token %}
-                            <h5 class="card-title">Nueva venta</h5>
+                            <h5 class="card-title">Editar venta</h5>
                             <h4>Datos del cliente:</h4>
                             <div style="display:flex">
                                 <div>
@@ -30,21 +30,23 @@
                                         readonly>
                                 </div>
 
-                                <input type="hidden" value="{{ ventas.idventa }}" name="idVenta" >
+                                <input type="hidden" value="{{ ventas.idventa }}" name="idVenta">
 
 
                                 <!-- fijo -->
                                 <div>
                                     <label for="">Nº Documento (dni/ruc)</label><br>
-                                    <input value="{{ventas.idcliente.numdoc}}" class="form-control" type="text" name="doccliente" id="doccliente">
+                                    <input value="{{ventas.idcliente.numdoc}}" class="form-control" type="text"
+                                        name="doccliente" id="doccliente">
                                     <input type="button" class="btn btn-dark" value="search" id="consultar">
                                     <!-- Boton search -->
                                 </div>
 
                                 <!-- id venta -->
                                 <div>
-                                
-                                    <input value="{{ventas.idcliente.idcliente}}" class="form-control" type="hidden" name="idcliente" id="idcliente">
+
+                                    <input value="{{ventas.idcliente.idcliente}}" class="form-control" type="hidden"
+                                        name="idcliente" id="idcliente">
 
                                 </div>
 
@@ -52,15 +54,15 @@
                                 <div>
 
                                     <label for="">Razon social / Nombres completos</label><br>
-                                    <input value="{{ventas.idcliente.razonsocial}}" class="form-control" type="text" name="nomcliente"
-                                        id="nomcliente" readonly style="width: 400px;">
+                                    <input value="{{ventas.idcliente.razonsocial}}" class="form-control" type="text"
+                                        name="nomcliente" id="nomcliente" readonly style="width: 400px;">
                                 </div>
                                 <br>
                                 <div>
 
                                     <label for="">Dirección</label><br>
-                                    <input value="{{ventas.idcliente.direccion}}" class="form-control" type="text" name="direccion" id="direccion"
-                                        readonly style="width: 400px;">
+                                    <input value="{{ventas.idcliente.direccion}}" class="form-control" type="text"
+                                        name="direccion" id="direccion" readonly style="width: 400px;">
                                 </div>
 
                             </div>
@@ -72,15 +74,18 @@
 
                                 <div class="input-group" id="compra">
                                     <label class="input-group-text">Serie:</label>
-                                    <input type="text" name="serie" id="serie" value="{{ventas.idnumserie.numserie}}" class="form-control" readonly>
-                                    
+                                    <input type="text" name="serie" id="serie" value="{{ventas.idnumserie.numserie}}"
+                                        class="form-control" readonly>
+
                                 </div>
                                 <div class="input-group" id="compra">
                                     <label class="input-group-text">Tipo igv:</label>
-                                    <input type="text" name="serie"  value="{{ventas.id_tipo_igv.tipo_igv}}" class="form-control" readonly>
-                                    <input type="hidden" id="tipoIgv" value="{{ventas.id_tipo_igv.id_tipo_igv}}" class="form-control" readonly>
+                                    <input type="text" name="serie" value="{{ventas.id_tipo_igv.tipo_igv}}"
+                                        class="form-control" readonly>
+                                    <input type="hidden" id="tipoIgv" value="{{ventas.id_tipo_igv.id_tipo_igv}}"
+                                        class="form-control" readonly>
 
-                                    
+
                                 </div>
 
                                 <div class="input-group" id="compra">
@@ -113,72 +118,89 @@
                                 </thead>
                                 <tbody id="cuerpo">
                                     {% for ventas_detalle in ventas_detalles %}
-                                    
-                                    <tr>
-                                        
-                                        <td>
-                                            <div class="input-group">
-                                                <input value="{{ventas_detalle.idproducto.idproducto}}"  type="hidden" name="producto[idproducto][]">
 
-                                                
-                                                <input value="{{ventas_detalle.idproducto.nomproducto}}" class="form-control busqueda " type="list" list="opcionesBusqueda" aria-label="With textarea" name="producto[nombre][]">
-                                                
+                                    <tr>
+
+                                        <td>
+                                            <div class="input-group">
+                                                <input value="{{ventas_detalle.idproducto.idproducto}}" type="hidden"
+                                                    name="producto[idproducto][]">
+
+
+                                                <input value="{{ventas_detalle.idproducto.nomproducto}}"
+                                                    class="form-control busqueda " type="list" list="opcionesBusqueda"
+                                                    aria-label="With textarea" name="producto[nombre][]">
+
                                                 <datalist id="opcionesBusqueda">
-                                                    
+
                                                 </datalist>
-                                                
+
                                             </div>
                                         </td>
-                                        
-                                        <td>
-                                            <div class="input-group">  
-                                               
-                                                <input type="hidden" value="{{ventas_detalle.idproducto.idunidad}}" class="form-control" name="producto[unidad][]" aria-label="With textarea">
-                                                <input type="text" readonly value="{{ventas_detalle.idproducto.idunidad.abrunidad}}" class="form-control"   aria-label="With textarea">
-                                                
-                                            </div>   
-                                        </td>
-                                        
+
                                         <td>
                                             <div class="input-group">
-                                                
-                                                <input value="{{ventas_detalle.idproducto.stockactual}}" id="stockActual" type="number" class="form-control"  aria-label="With textarea" readonly>
-    
+
+                                                <input type="hidden" value="{{ventas_detalle.idproducto.idunidad}}"
+                                                    class="form-control" name="producto[unidad][]"
+                                                    aria-label="With textarea">
+                                                <input type="text" readonly
+                                                    value="{{ventas_detalle.idproducto.idunidad.abrunidad}}"
+                                                    class="form-control" aria-label="With textarea">
+
                                             </div>
-    
                                         </td>
+
                                         <td>
                                             <div class="input-group">
-                                                
-                                                <input value="{{ventas_detalle.cantidad}}" type="number" class="form-control" id="cantidad" name="producto[cantidad][]" aria-label="With textarea">
-    
+
+                                                <input value="{{ventas_detalle.idproducto.stockactual}}"
+                                                    id="stockActual" type="number" class="form-control"
+                                                    aria-label="With textarea" readonly>
+
                                             </div>
-    
-                                        </td>
-            
-                                        <td>
-                                            
-                                            <div class="input-group">
-                                                <input value="{{ ventas_detalle.preciounitario_formateado }}" type="number" class="form-control" id="precioUnitario" name="producto[precioUnitario][]" aria-label="Precio Unitario">
-                                            </div>
-                                       
-                                            
+
                                         </td>
                                         <td>
                                             <div class="input-group">
-                                                
-                                                <input value="{{ventas_detalle.preciosubtotal}}" class="form-control" id="total" name="producto[subTotal][]" readonlyaria-label="With textarea">
-                                               
-                                            </div>  
+
+                                                <input value="{{ventas_detalle.cantidad_formateado}}" type="text"
+                                                    class="form-control" id="cantidad" name="producto[cantidad][]"
+                                                    aria-label="With textarea">
+
+                                            </div>
+
                                         </td>
-                                        
+
                                         <td>
-                                            <a href="{% url 'eliminar_venta_detalle' ventas_detalle.idventadetalle %}" class="btn btn-danger btn-eliminar-detalle" data-id="{{ detalle.idventadetalle }}">ELIMINAR</a>
+
+                                            <div class="input-group">
+                                                <input value="{{ ventas_detalle.preciounitario_formateado }}"
+                                                    type="number" class="form-control" id="precioUnitario"
+                                                    name="producto[precioUnitario][]" aria-label="Precio Unitario">
+                                            </div>
+
+
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+
+                                                <input value="{{ventas_detalle.preciosubtotal_formateado}}"
+                                                    class="form-control" id="total" name="producto[subTotal][]"
+                                                    readonlyaria-label="With textarea">
+
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <a href="{% url 'eliminar_venta_detalle' ventas_detalle.idventadetalle %}"
+                                                class="btn btn-danger btn-eliminar-detalle"
+                                                data-id="{{ detalle.idventadetalle }}">ELIMINAR</a>
                                         </td>
                                     </tr>
-                                    
-                                {% endfor %}
-                                      
+
+                                    {% endfor %}
+
 
                                 </tbody>
 
@@ -202,18 +224,22 @@
                                         <!-- Agrega -->
                                         <div style="margin-left: 50px;" id="pagoTotalPagar">
                                             <span><strong>Total Gravada: S/.</strong></span>
-                                            <input value="{{ventas.total_gravada_formateado}}" type="number" name="totalGravada" class="totalGravada form-control" readonly>
-                            
+                                            <input value="{{ventas.total_gravada_formateado}}" type="number"
+                                                name="totalGravada" class="totalGravada form-control" readonly>
+
                                             <span> <strong>Total Exonerada: S/.</strong> </span>
-                                            <input  value="{{ventas.total_exonerada_formateado}}" type="number" name="totalExonerada" class="totalExonerada form-control" readonly>
-                            
-                            
-                                            <span> <strong>Total igv:</strong>  </span>
-                                            <input  value="{{ventas.total_igv_formateado}}" type="number" name="totalIgv" class="totalIgv form-control" readonly>
-                            
+                                            <input value="{{ventas.total_exonerada_formateado}}" type="number"
+                                                name="totalExonerada" class="totalExonerada form-control" readonly>
+
+
+                                            <span> <strong>Total igv:</strong> </span>
+                                            <input value="{{ventas.total_igv_formateado}}" type="number" name="totalIgv"
+                                                class="totalIgv form-control" readonly>
+
                                             <span> <strong>Pago Total: S/.</strong> </span>
-                                            <input  value="{{ventas.total_a_pagar_formateado}}" type="number" name="ventaTotal" class="ventaTotal form-control" readonly>
-                            
+                                            <input value="{{ventas.total_a_pagar_formateado}}" type="number"
+                                                name="ventaTotal" class="ventaTotal form-control" readonly>
+
 
                                         </div>
                                     </div>
@@ -233,8 +259,8 @@
 
 <script>
 
-$(document).ready(function() {
-        $('.eliminar-btn').click(function() {
+    $(document).ready(function () {
+        $('.eliminar-btn').click(function () {
             var id = $(this).data('id');
             var csrfToken = '{{ csrf_token }}';  // Asegúrate de que el token CSRF esté disponible
 
@@ -245,12 +271,12 @@ $(document).ready(function() {
                     data: {
                         'csrfmiddlewaretoken': csrfToken
                     },
-                    success: function(response) {
+                    success: function (response) {
                         // Manejar la respuesta de éxito, por ejemplo, eliminar la fila de la tabla
                         alert('Detalle de venta eliminado exitosamente.');
                         location.reload();  // Recargar la página para reflejar los cambios
                     },
-                    error: function(response) {
+                    error: function (response) {
                         // Manejar errores
                         alert('Hubo un error al eliminar el detalle de venta.');
                     }
@@ -312,46 +338,62 @@ $(document).ready(function() {
         //Hacer busqueda de precio unitario del producto escrito en el input descripción
         let busqueda = () => {
             $(".busqueda").on('input', function (e) {
-
                 let currentRow = $(this).closest('tr');
+                let productName = $(this).val();
+
+                // Verifica si el producto ya existe en la lista
+                let productoExiste = false;
+                $('#cuerpo tr').each(function () {
+                    let nombreProducto = $(this).find('.busqueda').val();
+                    if (nombreProducto === productName && $(this).get(0) !== currentRow.get(0)) {
+                        productoExiste = true;
+                        return false; // Detiene el recorrido
+                    }
+                });
+
+                if (productoExiste) {
+                    alert("Producto ya existente en la lista");
+                    $(this).val(''); // Limpia el campo de búsqueda
+                    currentRow.find('#precioUnitario').val('');
+                    currentRow.find('#stockActual').val('');
+                    currentRow.find('#unidad').empty();
+                    $('#opcionesBusqueda').empty(); // Limpia las opciones del datalist
+                    return; // Sal de la función para evitar la adición del producto
+                }
 
                 $.ajax({
                     type: "POST",
                     url: "{% url 'buscarProducto' %}",
                     dataType: 'json',
                     data: {
-                        busqueda: $(this).val(),
+                        busqueda: productName,
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     },
                     success: function (response) {
-
                         $('#opcionesBusqueda').empty();
-                        //Producto precio
+
+                        // Producto precio
                         $.each(response.productos, function (index, value) {
-                            precioUnitario = value.preciounitario
-                            stockActual1 = value.stockactual
-                            opciones = '<option value="' + value.nomproducto + '"</option>';
+                            let precioUnitario = value.preciounitario;
+                            let stockActual1 = value.stockactual;
+                            let opciones = '<option value="' + value.nomproducto + '"></option>';
 
                             $('#opcionesBusqueda').append(opciones);
-                            $('#precioUnitario').empty();
-                            $('#stockActual').empty();
-                            // $('#precioUnitario').val(precioUnitario);
                             currentRow.find('#precioUnitario').val(precioUnitario);
                             currentRow.find('#stockActual').val(stockActual1);
                         });
-                        //Unidad
+
+                        // Unidad
                         currentRow.find('#unidad').empty();
                         $.each(response.unidad, function (index, value) {
-                            var opciones = '<option value="' + value.idunidad + '">' + value.abrunidad + '</option>';
-
+                            let opciones = '<option value="' + value.idunidad + '">' + value.abrunidad + '</option>';
                             currentRow.find('#unidad').append(opciones);
                         });
-
                     }
-                })
-
+                });
             });
         }
+
 
 
 
@@ -363,8 +405,8 @@ $(document).ready(function() {
             nuevaFila += '<td><div class="input-group"><input class="form-control busqueda" type="list" list="opcionesBusqueda" aria-label="With textarea" name="producto[nombre][]"><datalist id="opcionesBusqueda"></datalist></div></td>';
 
             nuevaFila += '<input class="form-control busqueda " type="hidden" list="opcionesBusqueda" aria-label="With textarea" name="producto[idproducto][]"></div></td>';
-            
-            
+
+
             nuevaFila += '<td><div class="input-group"><select name="producto[unidad][]" id="unidad" class="form-control" aria-label="With textarea">'
             nuevaFila += '<td><div class="input-group"><input class="form-control" type="number" readonly    id="stockActual"aria-label="With textarea"></div></td>'
 
@@ -402,7 +444,39 @@ $(document).ready(function() {
 
 
 
-$("#guardar").click(function(){
+        // $("#guardar").click(function () {
+        //     // Obtener los datos del formulario
+        //     var formData = new FormData($('form')[0]);
+
+        //     // Realizar la solicitud AJAX
+        //     $.ajax({
+        //         type: "POST",
+        //         url: "{% url 'guardarEditar' %}",
+        //         data: formData,
+        //         processData: false,  // Evitar que jQuery procese los datos automáticamente
+        //         contentType: false,  // No establecer automáticamente el tipo de contenido
+        //         success: function (response) {
+        //             Swal.fire({
+        //                 title: 'Venta editada exitosamente',
+        //                 icon: 'success',
+        //                 showCancelButton: true,
+        //                 confirmButtonColor: '#3085d6',
+        //                 cancelButtonColor: '#d33',
+        //                 confirmButtonText: '¡Ok!',
+        //             }).then((result) => {
+        //                 if (result.isConfirmed) {
+        //                     // Redireccionar solo si el usuario hace clic en "OK"
+        //                     window.location.href = "{% url 'ventas' %}";
+
+        //                 }
+        //             });
+        //         }
+        //     });
+        //     return false; // Prevenir el envío del formulario por defecto
+        // });
+
+
+        $("#guardar").click(function () {
     // Obtener los datos del formulario
     var formData = new FormData($('form')[0]);
 
@@ -414,25 +488,39 @@ $("#guardar").click(function(){
         processData: false,  // Evitar que jQuery procese los datos automáticamente
         contentType: false,  // No establecer automáticamente el tipo de contenido
         success: function (response) {
-            Swal.fire({
-                title: 'Venta editada exitosamente',
-                icon: 'success',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: '¡Ok!',
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Redireccionar solo si el usuario hace clic en "OK"
-                    window.location.href=  "{% url 'ventas' %}";
-
-                }
-            });
+            console.log(response);  // Para depuración, mostrar la respuesta en la consola
+            if (response.mensaje && response.mensaje.includes("Falta stock")) {
+                console.log(response.mensaje);
+                Swal.fire({
+                    title: 'Falta stock',
+                    html: response.mensaje,
+                    icon: 'error',
+                    confirmButtonText: 'Ok'
+                });
+            } else if (response.mensaje === "Venta exitosa") {
+                Swal.fire({
+                    title: 'Venta editada exitosamente',
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: '¡Ok!',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        console.log('Redireccionando a ventas');
+                        window.location.href = "{% url 'ventas' %}"; // Utiliza la etiqueta Django para generar la URL
+                    }
+                });
+            } else {
+                console.error('Respuesta inesperada:', response);
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error('Error en la solicitud AJAX:', error);
         }
     });
     return false; // Prevenir el envío del formulario por defecto
 });
-
 
 
         // Buscar en la api de cliente
@@ -495,53 +583,60 @@ $("#guardar").click(function(){
             }
         });
 
-        //Calcular el total
+        // Calcular el total
         $("body").on("input", "#cantidad", function (e) {
             let currentRow = $(this).closest('tr');
 
-            let cantidad = parseInt($(this).val()); // Convertir a entero
+            // Convertir a flotante la cantidad y el precio unitario
+            let cantidad = parseFloat($(this).val()) || 0; // Asegurarse de que la cantidad es un número decimal
+            let precioUnitario = parseFloat(currentRow.find("#precioUnitario").val()) || 0; // Asegurarse de que el precio unitario es un número decimal
 
-            let precioUnitario = parseFloat(currentRow.find("#precioUnitario").val()); // Convertir a flotante desde el campo de la misma fila
+            // Obtener el total anterior (debería ser decimal)
+            let totalAnterior = parseFloat(currentRow.find('#total').val().trim()) || 0;
 
-            let total = isNaN(cantidad) || isNaN(precioUnitario) ? 0 : precioUnitario * cantidad; // Calcular el total solo si ambos valores son números
+            console.log(totalAnterior);
+            // Calcular el nuevo total de la fila
+            let totalNuevo = isNaN(cantidad) || isNaN(precioUnitario) ? 0 : (precioUnitario * cantidad); // Total actual de la fila
 
-            // Formatear el total a dos decimales
-            total = total.toFixed(2);
 
-            currentRow.find('#total').val(total);
-
+            // Actualizar el total de la fila actual
+            currentRow.find('#total').val(totalNuevo.toFixed(2)); // Mantener el formato decimal con dos decimales
 
             let idTipo = $("#tipoIgv").val();
 
-            $(".totalGravada").empty();
-            $(".totalIgv").empty();
-            $(".totalExonerada").empty();
-            $(".ventaTotal").empty();
+            // Inicializar los valores actuales de los totales
+            let totalGravada = parseFloat($(".totalGravada").val()) || 0;
+            let totalIgv = parseFloat($(".totalIgv").val()) || 0;
+            let totalExonerada = parseFloat($(".totalExonerada").val()) || 0;
+            let ventaTotal = parseFloat($(".ventaTotal").val()) || 0;
 
+            // Restar el total anterior de los valores globales
             if (idTipo == 1) {
-                //Capturo el ig actual del nuevo producto y lo sumo al total IGV que ya tengo
-                let igvDelProductActual = parseFloat((total * 0.18)).toFixed(2);
-                //Nuevo igv ya sumado
-                let totalIgv = (parseFloat($(".totalIgv").val()) + parseFloat(igvDelProductActual)).toFixed(2); 
-
-                //Hago los nuevos calculos para los demás totales
-                let totalGravada = (parseFloat($(".totalGravada").val()) + parseFloat(total)).toFixed(2);
-                let totalConIgv = parseFloat((totalGravada + totalIgv)).toFixed(2);
-        
-
-                $(".totalGravada").val(totalGravada);
-                $(".totalIgv").val(totalIgv);
-                $(".totalExonerada").val(0);
-                $(".ventaTotal").val(totalConIgv);
-
+                let igvDelProductoAnterior = parseFloat((totalAnterior / 1.18) * 0.18).toFixed(2);
+                totalIgv -= parseFloat(igvDelProductoAnterior);
+                totalGravada -= parseFloat(totalAnterior / 1.18);
             } else if (idTipo == 9) {
-                totalIgv=  parseFloat($(".totalIgv").val(0)).toFixed(2);
-                ventaTotal= parseFloat($(".ventaTotal").val(0)).toFixed(2);
-                totalGravada= parseFloat($(".totalGravada").val(0)).toFixed(2);
-                totalExonerada= parseFloat($(".totalExonerada").val()).toFixed(2);
-                ventaTotal= parseFloat($(".ventaTotal").val()).toFixed(2);
+                totalExonerada -= parseFloat(totalAnterior);
             }
 
+            // Sumar el nuevo total a los valores globales
+            if (idTipo == 1) {
+                let igvDelProductoActual = parseFloat((totalNuevo / 1.18) * 0.18).toFixed(2);
+                totalIgv = (parseFloat(totalIgv) + parseFloat(igvDelProductoActual)).toFixed(2);
+                totalGravada = ((parseFloat(totalGravada) + parseFloat(totalNuevo / 1.18))).toFixed(2);
+                ventaTotal = (parseFloat(totalGravada) + parseFloat(totalIgv)).toFixed(2);
+            } else if (idTipo == 9) {
+                totalIgv = 0;
+                totalExonerada = parseFloat(totalNuevo).toFixed(2);
+                totalGravada = 0;
+                ventaTotal = parseFloat(totalExonerada).toFixed(2);
+            }
+
+            // Actualizar los valores de los totales en el formulario
+            $(".totalGravada").val(totalGravada);
+            $(".totalIgv").val(totalIgv);
+            $(".totalExonerada").val(totalExonerada);
+            $(".ventaTotal").val(ventaTotal);
         });
 
 

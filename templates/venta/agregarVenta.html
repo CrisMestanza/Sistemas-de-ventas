@@ -507,7 +507,7 @@
         //Calcular el total
         $("body").on("input", "#cantidad", function (e) {
             let currentRow = $(this).closest('tr');
-            let cantidad = parseInt($(this).val()); // Convertir a entero
+            let cantidad = parseFloat($(this).val()); // Convertir a entero
             let precioUnitario = parseFloat(currentRow.find("#precioUnitario").val()); // Convertir a flotante desde el campo de la misma fila
             let total = isNaN(cantidad) || isNaN(precioUnitario) ? 0 : precioUnitario * cantidad; // Calcular el total solo si ambos valores son números
             // Formatear el total a dos decimales

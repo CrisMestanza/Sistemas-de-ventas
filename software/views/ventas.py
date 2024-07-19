@@ -235,7 +235,7 @@ def guardarVenta(request):
         if obtener_producto:
             stockActual = obtener_producto.stockactual
 
-            if stockActual < int(cantidad):
+            if stockActual < float(cantidad):
                 productos_sin_stock.append(obtener_producto.nomproducto)
         else:
             return JsonResponse({"error": f"Producto {nombre} no encontrado"})
@@ -286,7 +286,7 @@ def guardarVenta(request):
         # if stockActual < int(cantidad_subtotal):
         #     return redirect('agregarVenta')
 
-        obtener_producto.stockactual = stockActual - int(cantidad_subtotal)
+        obtener_producto.stockactual = stockActual - float(cantidad_subtotal)
         obtener_producto.save()
 
         # precio_subtotal= cantidad_subtotal*precio_unitario #Tal vez
@@ -365,8 +365,9 @@ def editarVenta(request, id):
 
         # Formatear preciounitario en cada detalle de venta
         for detalle in ventas_detalles:
-            detalle.preciounitario_formateado = str(
-                detalle.idproducto.preciounitario).replace(',', '.')
+            detalle.preciounitario_formateado = str(detalle.idproducto.preciounitario).replace(',', '.')
+            detalle.cantidad_formateado = str(detalle.cantidad).replace(',', '.')
+            detalle.preciosubtotal_formateado = str(detalle.preciosubtotal).replace(',', '.')
 
 
         ventas.total_gravada_formateado = str(ventas.total_gravada).replace(',', '.')
@@ -374,7 +375,7 @@ def editarVenta(request, id):
         ventas.total_igv_formateado = str(ventas.total_igv).replace(',', '.')
         ventas.total_a_pagar_formateado = str(ventas.total_a_pagar).replace(',', '.')
 
-        
+  
         data = {
             'ventas': ventas,
             'ventas_detalles': ventas_detalles,
@@ -411,8 +412,23 @@ def guardarEditar(request):
 
     new_zip = zip(nombres, cantidades, precio_unitarios,
                   sub_totales, idproductos)
-    # print(idproductos)
-    print(idproductos)
+    productos_sin_stock = []
+    for nombre, cantidad in zip(nombres, cantidades):
+        obtener_producto = Producto.objects.filter(nomproducto=nombre).first()
+
+        if obtener_producto:
+            stockActual = obtener_producto.stockactual
+
+            if stockActual < float(cantidad):
+                productos_sin_stock.append(obtener_producto.nomproducto)
+        else:
+            return JsonResponse({"error": f"Producto {nombre} no encontrado"})
+
+    if productos_sin_stock:
+        mensaje = "Falta stock para los siguientes productos:<br>-" + \
+            "<br>- ".join(productos_sin_stock)
+        return JsonResponse({"mensaje": mensaje})
+    
     # Si ya existía el registro, edita, si no resta el stock del producto nuevo y agrega un nuevo registro de venta detalle
     for nombre, cantidad, precio_unitario, subtotal, id_producto in new_zip:
         # Reemplaza las comas por puntos en el subtotal
@@ -432,7 +448,7 @@ def guardarEditar(request):
                 obtener_producto = Producto.objects.filter(
                     nomproducto=nombre).first()
                 stockActual = obtener_producto.stockactual + venta_detalle.cantidad
-                obtener_producto.stockactual = stockActual - int(cantidad)
+                obtener_producto.stockactual = stockActual - Decimal(cantidad)
                 obtener_producto.save()
 
                 # Actualizo datos en el detalle
@@ -470,7 +486,7 @@ def guardarEditar(request):
     venta.total_a_pagar = ventaTotal
     venta.save()
 
-    return redirect('ventas')
+    return JsonResponse({"mensaje": "Venta exitosa"})
 
 
 def buscarFechaVentas(request):
