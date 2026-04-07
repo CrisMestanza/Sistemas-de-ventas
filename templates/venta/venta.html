@@ -48,7 +48,7 @@
                         <th scope="col">Fecha</th>
                         <th scope="col">Doc</th>
                         <th scope="col">Ticket</th>
-                        <th scope="col">A4</th>
+                        <th scope="col">XML</th>
                         <th scope="col">CDR</th>
                         <!-- <th scope="col">Ticket</th> -->
                         <th scope="col">Editar</th>
@@ -83,7 +83,7 @@
                             <td>
                               {% if resultado.6 %}
                                 <a  href="{{ resultado.6 }}" target="_blank">
-                                  <i class="fa-solid fa-file-pdf fa-2xl" style="color: #005eff; margin-left: 30px;"></i>
+                                 <i class="fa-regular fa-file fa-2xl" style="color: #005eff; margin-left: 30px;"></i>
                                 </a>
                               {% else %}
                                 Falta envíar
@@ -125,7 +125,9 @@
                                     <i class="fa-regular fa-envelope fa-2x"></i>
                                 </a>
                                 {% endif %}
-                            </td>           
+                            </td> 
+                                      
+                                      
                          </tr>
 
                     {% endfor %} 

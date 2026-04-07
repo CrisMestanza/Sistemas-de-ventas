@@ -6,7 +6,7 @@ from software.models.distritosModel import Distritos
 from django.http import HttpResponse, JsonResponse
 from software.models.detalletipousuarioxmodulosModel import Detalletipousuarioxmodulos
 import templates
-
+import requests
 
 def configuracion(request):
 
@@ -78,8 +78,63 @@ def editarEmpresa(request):
     empresa.iddistrito = getDistrito
     empresa.save()
 
-    return redirect('configuracion')
 
+    url = "http://127.0.0.1:8001/api/v1/companies"
+    urlSucursal = "http://127.0.0.1:8001/api/v1/branches"
+
+    print("Token en sesión antes de la solicitud API:", request.session.get('api_token'))  # Debug: Verificar token antes de la solicitud
+    
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {request.session.get('api_token')}"
+    }
+    
+    body = {
+        "ruc": ruc,
+        "razon_social": razonSocial,
+        "nombre_comercial": nombreComercia,
+        "direccion": Direccion,
+        "ubigeo": ubigueo,
+        "distrito": getDistrito.nombredistrito,
+        "provincia": getDistrito.idprovincia.nombreprovincia,
+        "departamento": getDistrito.idprovincia.iddepartamento.nombredepartamento,
+        "telefono": telefono,
+        "email": "contacto@empresademo.com",
+        "usuario_sol": "MODDATOS",
+        "clave_sol": "MODDATOS",
+        "modo_produccion": 0
+    }
+
+    bodySucursal = {
+        "company_id": 1,
+        "codigo": "0001",
+        "nombre": nombreComercia,
+        "direccion": Direccion,
+        "ubigeo": ubigueo,
+        "distrito": getDistrito.nombredistrito,
+        "provincia": getDistrito.idprovincia.nombreprovincia,
+        "departamento": getDistrito.idprovincia.iddepartamento.nombredepartamento,
+        "telefono": telefono,
+        "email": "principal@empresademo.com"
+    }
+    
+    
+    try:
+        response = requests.post(url, json=body, headers=headers)
+        data = response.json()
+
+        print("Respuesta API Empresa:", data)
+        
+        responseSucursal = requests.post(urlSucursal, json=bodySucursal, headers=headers)
+        dataSucursal = responseSucursal.json()
+
+        print("Respuesta API Sucursal:", dataSucursal) 
+        
+        return redirect('configuracion')
+    
+    except Exception as e:
+                print("Error al consumir API:", str(e))
 
 def produccion(request, id):
     empresa = Empresa.objects.get(idempresa=id)

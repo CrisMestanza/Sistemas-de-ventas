@@ -56,6 +56,11 @@
                                     <label for="">Dirección</label><br>
                                     <input value="-" class="form-control" type="text" name="direccion" id="direccion"
                                         readonly style="width: 400px;">
+
+                                    <input type="hidden" name="ubigeo" id="ubigeo">
+                                    <input type="hidden" name="distrito" id="distrito">
+                                    <input type="hidden" name="provincia" id="provincia">
+                                    <input type="hidden" name="departamento" id="departamento">
                                 </div>
 
 
@@ -84,21 +89,21 @@
                                 </div>
                                 <div class="input-group" id="compra">
                                     <label class="input-group-text">Tipo igv:</label>
-    
-                              
+
+
                                     <!-- {% for row in rows %}
                                     <input type="text" class="form-control" value="{{ row.0 }}">  
                                     <input value="{{ row.1 }}" class="form-control" type="hidden" name="tipo_igv" id="tipo_igv" readonly style="width: 400px;">  
-                                {% endfor %} -->
-                                
-                            
-                                   <select name="tipo_igv" id="tipo_igv" class="form-control"
+                                    {% endfor %} -->
+
+
+                                    <select name="tipo_igv" id="tipo_igv" class="form-control"
                                         aria-label="With textarea">
                                         <option> Seleccione tipo de igv </option>
                                         {% for row in rows %}
                                         <option value="{{row.1}}"> {{row.2}} </option>
                                         {% endfor %}
-                                    </select> 
+                                    </select>
                                 </div>
 
                                 <div class="input-group" id="compra">
@@ -181,7 +186,7 @@
                                             <div class="input-group">
 
                                                 <input class="form-control" type="number" id="stockActual" readonly
-                                                     aria-label="With textarea">
+                                                    aria-label="With textarea">
                                             </div>
                                         </td>
                                         <td>
@@ -233,10 +238,10 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-success"
                                                 style="margin-left: 1rem;">Regresar a ventas</button>
-                                            </div>
-                                            <!-- Agrega -->
-                                            <div style="margin-left: 50px;" id="pagoTotalPagar"> 
-                                 
+                                        </div>
+                                        <!-- Agrega -->
+                                        <div style="margin-left: 50px;" id="pagoTotalPagar">
+
                                         </div>
                                     </div>
                                 </div>
@@ -305,6 +310,7 @@
             }
 
         });
+        
         //Hacer busqueda de precio unitario del producto escrito en el input descripción
         let busqueda = () => {
             $(".busqueda").on('input', function (e) {
@@ -393,52 +399,52 @@
         busqueda();
 
 
-        
-        $("#guardar").click(function () {
-    // Obtener los datos del formulario
-    var formData = new FormData($('form')[0]);
 
-    // Realizar la solicitud AJAX
-    $.ajax({
-        type: "POST",
-        url: "{% url 'guardarVenta' %}",
-        data: formData,
-        processData: false,  // Evitar que jQuery procese los datos automáticamente
-        contentType: false,  // No establecer automáticamente el tipo de contenido
-        success: function (response) {
-            console.log(response);  // Para depuración, mostrar la respuesta en la consola
-            if (response.mensaje && response.mensaje.includes("Falta stock")) {
-                console.log(response.mensaje);
-                Swal.fire({
-                    title: 'Falta stock',
-                    html: response.mensaje,
-                    icon: 'error',
-                    confirmButtonText: 'Ok'
-                });
-            } else if (response.mensaje === "Venta exitosa") {
-                Swal.fire({
-                    title: 'Venta exitosa',
-                    icon: 'success',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: '¡Ok!',
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        console.log('Redireccionando a ventas');
-                        window.location.href = "{% url 'ventas' %}"; // Utiliza la etiqueta Django para generar la URL
+        $("#guardar").click(function () {
+            // Obtener los datos del formulario
+            var formData = new FormData($('form')[0]);
+
+            // Realizar la solicitud AJAX
+            $.ajax({
+                type: "POST",
+                url: "{% url 'guardarVenta' %}",
+                data: formData,
+                processData: false,  // Evitar que jQuery procese los datos automáticamente
+                contentType: false,  // No establecer automáticamente el tipo de contenido
+                success: function (response) {
+                    console.log(response);  // Para depuración, mostrar la respuesta en la consola
+                    if (response.mensaje && response.mensaje.includes("Falta stock")) {
+                        console.log(response.mensaje);
+                        Swal.fire({
+                            title: 'Falta stock',
+                            html: response.mensaje,
+                            icon: 'error',
+                            confirmButtonText: 'Ok'
+                        });
+                    } else if (response.mensaje === "Venta exitosa") {
+                        Swal.fire({
+                            title: 'Venta exitosa',
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: '¡Ok!',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                console.log('Redireccionando a ventas');
+                                window.location.href = "{% url 'ventas' %}"; // Utiliza la etiqueta Django para generar la URL
+                            }
+                        });
+                    } else {
+                        console.error('Respuesta inesperada:', response);
                     }
-                });
-            } else {
-                console.error('Respuesta inesperada:', response);
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error('Error en la solicitud AJAX:', error);
-        }
-    });
-    return false; // Prevenir el envío del formulario por defecto
-});
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error en la solicitud AJAX:', error);
+                }
+            });
+            return false; // Prevenir el envío del formulario por defecto
+        });
 
 
 
@@ -467,6 +473,15 @@
                         nombre += " " + response.apellidoMaterno;
                         $("#nomcliente").val(nombre);
                         $("#direccion").val("-");
+
+                        $("#ubigeo").val("150101");
+                        $("#distrito").val("Lima");
+                        $("#provincia").val("Lima");
+                        $("#departamento").val("Lima");
+                
+
+
+                        
                     },
 
                     error: function () {
@@ -492,6 +507,11 @@
                         console.log(nombre + direccion);
                         $("#nomcliente").val(nombre);
                         $("#direccion").val(direccion);
+
+                        $("#ubigeo").val(response.ubigeo);
+                        $("#distrito").val(response.distrito);
+                        $("#provincia").val(response.provincia);
+                        $("#departamento").val(response.departamento);
                     },
 
                     error: function () {
@@ -536,7 +556,7 @@
 
             let idTipo = $("#tipo_igv").val();
             if (idTipo == 1) {
-                
+
                 let igv = parseFloat((total * 0.18).toFixed(2));
                 let totalConIgv = parseFloat((total + igv).toFixed(2));
 
@@ -556,21 +576,21 @@
 
 
         //Dependiendo de si selcciona gravado(1) o exonerada(9)
-        $("#tipo_igv").change(function(){
-            id= $(this).val();
+        $("#tipo_igv").change(function () {
+            id = $(this).val();
             $('#pagoTotalPagar').empty();
 
-            if(id==1){
-                
+            if (id == 1) {
+
                 campos = '<span><strong>Total Gravada: S/.</strong></span>'
                 campos += '<input type="number" name="totalGravada" class="totalGravada form-control" readonly>'
 
-                campos  += '<span> <strong>Total Exonerada: S/.</strong> </span>' 
+                campos += '<span> <strong>Total Exonerada: S/.</strong> </span>'
                 campos += '<input type="number" name="totalExonerada" class="totalExonerada form-control" readonly>'
 
 
                 campos += '<span> <strong>Total igv:</strong>  </span>'
-                campos +=  '<input type="number" name="totalIgv" class="totalIgv form-control" readonly>'
+                campos += '<input type="number" name="totalIgv" class="totalIgv form-control" readonly>'
 
                 campos += '<span> <strong>Pago Total: S/.</strong> </span>'
                 campos += '<input type="number" name="ventaTotal" class="ventaTotal form-control" readonly>'
@@ -578,17 +598,17 @@
                 $('#pagoTotalPagar').append(campos)
             }
 
-            if(id==9){
-     
+            if (id == 9) {
+
                 campos = '<span><strong>Total Gravada: S/.</strong></span>'
                 campos += '<input type="number" name="totalGravada" class="totalGravada form-control" readonly>'
 
-                campos  += '<span> <strong>Total Exonerada: S/.</strong> </span>' 
+                campos += '<span> <strong>Total Exonerada: S/.</strong> </span>'
                 campos += '<input type="number" name="totalExonerada" class="totalExonerada form-control" readonly>'
 
 
                 campos += '<span> <strong>Total igv:</strong>  </span>'
-                campos +=  '<input type="number" name="totalIgv" class="totalIgv form-control" readonly>'
+                campos += '<input type="number" name="totalIgv" class="totalIgv form-control" readonly>'
 
                 campos += '<span> <strong>Pago Total: S/.</strong> </span>'
                 campos += '<input type="number" name="ventaTotal" class="ventaTotal form-control" readonly>'

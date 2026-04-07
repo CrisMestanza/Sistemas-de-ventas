@@ -35,6 +35,7 @@ class Venta(models.Model):
     total_exonerada = models.DecimalField(max_digits=10, decimal_places=2)
     total_inafecta = models.DecimalField(max_digits=10, decimal_places=2)
     total_a_pagar = models.DecimalField(max_digits=10, decimal_places=2)
+    api_id = models.IntegerField()
 
     class Meta:
         managed = False

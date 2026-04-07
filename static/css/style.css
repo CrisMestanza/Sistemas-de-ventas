@@ -1231,3 +1231,82 @@ h6 {
   font-size: 13px;
   color: #012970;
 }
+
+
+/* =========================
+   BIENVENIDA (MEJORADA)
+========================= */
+
+.saludo {
+  font-size: 20px; /* MÁS GRANDE */
+  font-weight: 600;
+  color: #1e293b; /* gris oscuro elegante */
+  letter-spacing: 0.5px;
+}
+
+.nombre {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* =========================
+   FRASE MOTIVACIONAL PRO
+========================= */
+
+.typing-container {
+  margin-top: 14px;
+  font-size: 35px; /* grande pero no exagerado */
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  position: relative;
+  display: inline-block;
+  line-height: 1.4;
+
+  /* GRADIENTE MÁS SUAVE */
+  background: linear-gradient(270deg, #2563eb, #3b82f6, #60a5fa);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  animation: gradientMove 10s ease infinite;
+
+  /* GLOW MUCHO MÁS SUAVE */
+  filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.25));
+}
+
+/* línea sutil debajo */
+.typing-container::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 60%;
+  height: 2px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #3b82f6, transparent);
+  opacity: 0.6;
+}
+
+/* cursor más discreto */
+#typing-text::after {
+  content: "|";
+  margin-left: 4px;
+  color: #3b82f6;
+  animation: blink 1s infinite;
+}
+
+/* =========================
+   ANIMACIONES
+========================= */
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
+}
