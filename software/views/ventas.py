@@ -269,6 +269,7 @@ def guardarVenta(request):
 
     # Obtener tipo cliente
     tipo_cliente = Tipocliente.objects.get(idtipocliente=tipoCliente)
+    print("Tipo cliente primero:", tipo_cliente.nomtipocliente)
     # obtener tipo_entidad
     getTipo_entidad = TipoEntidad.objects.get(id_tipo_entidad=tipo_entidad)
     # agregar cliente
@@ -351,10 +352,13 @@ def guardarVenta(request):
             "codigo_producto_sunat": "10101500"
         })
 
-    print("Tipo cliente", numserie)
-    if len(tipoCliente) == 1:
+    print("Tipo cliente", numserie.idtipodocumento)
+    print("Tipo cliente", tipoCliente)
+    
+    
+    if int(tipoCliente) == 1:
         tipo_doc_cliente = "6"  # RUC
-    elif len(tipoCliente) == 2:
+    elif int(tipoCliente) == 2:
         tipo_doc_cliente = "1"  # DNI
         
     cliente_api = {
