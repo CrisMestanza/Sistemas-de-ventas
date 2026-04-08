@@ -8,6 +8,7 @@ from software.models.detalletipousuarioxmodulosModel import Detalletipousuarioxm
 import templates
 import requests
 
+
 def configuracion(request):
 
     id2 = request.session.get('idtipousuario')
@@ -78,18 +79,18 @@ def editarEmpresa(request):
     empresa.iddistrito = getDistrito
     empresa.save()
 
-
     url = "http://127.0.0.1:8001/api/v1/companies"
     urlSucursal = "http://127.0.0.1:8001/api/v1/branches"
 
-    print("Token en sesión antes de la solicitud API:", request.session.get('api_token'))  # Debug: Verificar token antes de la solicitud
-    
+    print("Token en sesión antes de la solicitud API:", request.session.get(
+        'api_token'))  # Debug: Verificar token antes de la solicitud
+
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "Authorization": f"Bearer {request.session.get('api_token')}"
     }
-    
+
     body = {
         "ruc": ruc,
         "razon_social": razonSocial,
@@ -118,28 +119,129 @@ def editarEmpresa(request):
         "telefono": telefono,
         "email": "principal@empresademo.com"
     }
-    
-    
+
     try:
         response = requests.post(url, json=body, headers=headers)
         data = response.json()
 
         print("Respuesta API Empresa:", data)
-        
-        responseSucursal = requests.post(urlSucursal, json=bodySucursal, headers=headers)
+
+        responseSucursal = requests.post(
+            urlSucursal, json=bodySucursal, headers=headers)
         dataSucursal = responseSucursal.json()
 
-        print("Respuesta API Sucursal:", dataSucursal) 
-        
+        print("Respuesta API Sucursal:", dataSucursal)
+
         return redirect('configuracion')
-    
+
     except Exception as e:
                 print("Error al consumir API:", str(e))
+
+
+
+def agregarpem(request):
+    if request.method == 'POST':
+
+        idempresaPost = request.POST.get('idempresa')
+        ruc = request.POST.get('ruc')
+        razonSocial = request.POST.get('razonSocial')
+        nombreComercia = request.POST.get('nombreComercia')
+        Direccion = request.POST.get('Direccion')
+        telefono = request.POST.get('telefono')
+        password = request.POST.get('password')
+        ubigueo = request.POST.get('ubigueo')
+
+        certificado_password = request.POST.get('certificado_password')
+
+        # archivos
+        pem = request.FILES.get('pem')
+        imagen = request.FILES.get('imagen')
+
+        # DB LOCAL
+        getDistrito = Distritos.objects.get(iddistrito=ubigueo)
+        empresa = Empresa.objects.get(idempresa=idempresaPost)
+
+        empresa.ruc = ruc
+        empresa.razonsocial = razonSocial
+        empresa.nombrecomercial = nombreComercia
+        empresa.direccion = Direccion
+        empresa.telefono = telefono
+        empresa.passwordsec = password
+        empresa.ubigueo = ubigueo
+        empresa.iddistrito = getDistrito
+        empresa.save()
+
+        # 🔥 API DESTINO
+        url = "http://127.0.0.1:8001/api/v1/companies/1"
+
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {request.session.get('api_token')}"
+        }
+
+        # 🔥 FORM-DATA
+        data = {
+            "ruc": ruc,
+            "razon_social": razonSocial,
+            "nombre_comercial": nombreComercia,
+            "direccion": Direccion,
+            "ubigeo": ubigueo,
+            "distrito": getDistrito.nombredistrito,
+            "provincia": getDistrito.idprovincia.nombreprovincia,
+            "departamento": getDistrito.idprovincia.iddepartamento.nombredepartamento,
+            "telefono": telefono,
+            "email": "empresademo@gmail.com",
+            "usuario_sol": "MODDATOS",
+            "clave_sol": "MODDATOS",
+            "certificado_password": certificado_password,
+            "modo_produccion": 0,
+            "_method": "PUT"   # 🔥 IMPORTANTE
+        }
+
+        files = {}
+
+        if pem:
+            files["certificado_pem"] = (pem.name, pem, pem.content_type)
+
+        if imagen:
+            files["logo_path"] = (imagen.name, imagen, imagen.content_type)
+
+        try:
+            response = requests.post(url, data=data, files=files, headers=headers)
+
+            print("STATUS:", response.status_code)
+            print("RESPUESTA:", response.text)
+
+            return redirect('configuracion')
+
+        except Exception as e:
+            print("ERROR:", str(e))
+            return redirect('configuracion')
+
+
 
 def produccion(request, id):
     empresa = Empresa.objects.get(idempresa=id)
     empresa.mododev = 1
     empresa.save()
+
+    url = f"http://127.0.0.1:8001/api/v1/companies/{id}/activate"
+    headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {request.session.get('api_token')}"
+        }
+
+    try:
+        response = requests.post(url, headers=headers)
+        data = response.json()
+
+        print("Respuesta API Empresa:", data)
+
+        return redirect('configuracion')
+
+    except Exception as e:
+            print("Error al consumir API:", str(e))
+            
     return redirect('configuracion')
 
 

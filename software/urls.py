@@ -85,6 +85,7 @@ urlpatterns = [
     
     #configuracion
     path('configuracion', configuracion.configuracion, name="configuracion"),
+    path('configuracion/agregarpem', configuracion.agregarpem, name="agregarpem"),
     path('configuracion/buscarProvincias', configuracion.buscarProvincias, name="buscarProvincias"),
     path('configuracion/buscarDistritos', configuracion.buscarDistritos, name="buscarDistritos"),
     path('configuracion/ubigueo', configuracion.ubigueo, name="ubigueo"),
