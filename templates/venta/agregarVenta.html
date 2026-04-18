@@ -413,6 +413,10 @@
 
 
         $("#guardar").click(function () {
+            $('input[name="producto[nombre][]"]').each(function () {
+                $(this).val($.trim($(this).val()));
+            });
+
             // Obtener los datos del formulario
             var formData = new FormData($('form')[0]);
 
@@ -446,6 +450,13 @@
                                 console.log('Redireccionando a ventas');
                                 window.location.href = "{% url 'ventas' %}"; // Utiliza la etiqueta Django para generar la URL
                             }
+                        });
+                    } else if (response.error) {
+                        Swal.fire({
+                            title: 'No se pudo guardar',
+                            html: response.error,
+                            icon: 'error',
+                            confirmButtonText: 'Ok'
                         });
                     } else {
                         console.error('Respuesta inesperada:', response);
@@ -490,10 +501,7 @@
                         $("#distrito").val("Lima");
                         $("#provincia").val("Lima");
                         $("#departamento").val("Lima");
-                
-
-
-                        
+ 
                     },
 
                     error: function () {

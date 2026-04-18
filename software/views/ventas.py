@@ -43,6 +43,7 @@ from software.models.ModopagoModel import Modopago
 from software.models.DepatamentoIgvModel import Detalletipoigvxdepartamento
 from openpyxl import Workbook
 from django.db.models import Q, Sum
+from django.db.models.functions import Trim
 from openpyxl.utils import get_column_letter
 
 from reportlab.lib.pagesizes import letter
@@ -93,8 +94,18 @@ def _buscar_producto_por_nombre_o_barra(valor):
     if not valor:
         return None
 
-    return Producto.objects.filter(
+    producto = Producto.objects.filter(
         Q(nomproducto__iexact=valor) | Q(codigo_barras__iexact=valor),
+        estado=1,
+    ).first()
+    if producto:
+        return producto
+
+    return Producto.objects.annotate(
+        nomproducto_limpio=Trim('nomproducto'),
+        codigo_barras_limpio=Trim('codigo_barras'),
+    ).filter(
+        Q(nomproducto_limpio__iexact=valor) | Q(codigo_barras_limpio__iexact=valor),
         estado=1,
     ).first()
 
@@ -505,20 +516,31 @@ def guardarVenta(request):
     elif int(tipoCliente) == 2:
         tipo_entidad = 1
 
-    # Documento
-    tipoDocumento = request.POST.get('tipoDocumento')
-    print("Tipo de documento: ", tipoDocumento)
     # ss
     serie = request.POST.get('serie')
+
+    # Documento
+    tipoDocumento = request.POST.get('tipoDocumento')
+    if not tipoDocumento and serie:
+        serie_documento = Numserie.objects.filter(
+            idnumserie=serie
+        ).select_related('idtipodocumento').first()
+        if serie_documento:
+            tipoDocumento = serie_documento.idtipodocumento
+    print("Tipo de documento: ", tipoDocumento)
+
     placa = request.POST.get('placa')
     # fechDocumento = request.POST.get('fechDocumento')
 
-    productos = request.POST.getlist('producto[nombre][]')
+    productos = [
+        str(producto or '').strip()
+        for producto in request.POST.getlist('producto[nombre][]')
+    ]
     unidades = request.POST.getlist('producto[unidad][]')
     cantidades = request.POST.getlist('producto[cantidad][]')
     precio_unitarios = request.POST.getlist('producto[precioUnitario][]')
     sub_totales = request.POST.getlist('producto[subTotal][]')
-
+    print(f"Productos: {productos}")
     # Tipo igv
     tipo_igv = request.POST.get('tipo_igv')
 
