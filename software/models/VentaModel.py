@@ -20,6 +20,7 @@ class Venta(models.Model):
     ruta_pdf = models.CharField(max_length=500)
     ruta_ticket = models.CharField(max_length=500)
     ruta_cdr = models.CharField(max_length=500)
+    ruta_xml = models.CharField(max_length=500)
     respuesta_sunat_descripcion = models.CharField(max_length=500)
     respuesta_sunat_codigo = models.CharField(max_length=500)
     id_tipo_igv = models.ForeignKey(

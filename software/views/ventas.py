@@ -54,6 +54,7 @@ from reportlab.graphics import renderPDF
 import os
 from django.conf import settings
 from django.templatetags.static import static
+from PIL import Image
 
 
 # Create your views here.
@@ -69,6 +70,22 @@ def _to_decimal(value):
 
 def _to_float(value):
     return float(_to_decimal(value))
+
+
+def _extract_json_response(response_text):
+    decoder = json.JSONDecoder()
+
+    for index, char in enumerate(response_text):
+        if char != '{':
+            continue
+
+        try:
+            parsed, _ = decoder.raw_decode(response_text[index:])
+            return parsed
+        except json.JSONDecodeError:
+            continue
+
+    raise ValueError('La respuesta de la API no contiene JSON valido')
 
 
 def _buscar_producto_por_nombre_o_barra(valor):
@@ -101,6 +118,35 @@ def _find_empresa_logo(empresa):
         if logo_path and os.path.exists(logo_path):
             return logo_path
     return None
+
+
+def _prepare_ticket_logo(logo_path):
+    if not logo_path:
+        return None
+
+    cache_dir = os.path.join(settings.MEDIA_ROOT, 'tickets', 'cache')
+    os.makedirs(cache_dir, exist_ok=True)
+    cache_path = os.path.join(cache_dir, 'empresa_logo_ticket.png')
+
+    try:
+        if os.path.exists(cache_path) and os.path.getmtime(cache_path) >= os.path.getmtime(logo_path):
+            return cache_path
+
+        previous_max_pixels = Image.MAX_IMAGE_PIXELS
+        Image.MAX_IMAGE_PIXELS = None
+        try:
+            with Image.open(logo_path) as image:
+                image.thumbnail((600, 300), Image.LANCZOS)
+                if image.mode not in ('RGB', 'RGBA'):
+                    image = image.convert('RGBA')
+                image.save(cache_path, format='PNG', optimize=True)
+        finally:
+            Image.MAX_IMAGE_PIXELS = previous_max_pixels
+
+        return cache_path
+    except Exception as e:
+        print(f"No se pudo preparar el logo del ticket: {e}")
+        return None
 
 
 def _draw_wrapped_text(pdf, text, x, y, max_width, font_name='Helvetica', font_size=7, leading=8):
@@ -191,18 +237,21 @@ def generar_ticket_pdf_venta(venta):
     pdf = canvas.Canvas(ruta_absoluta, pagesize=(page_width, page_height))
     pdf.setTitle(f'Ticket {venta.idnumserie.numserie}-{venta.numcorrelativo}')
 
-    logo_path = _find_empresa_logo(venta.idempresa)
+    logo_path = _prepare_ticket_logo(_find_empresa_logo(venta.idempresa))
     if logo_path:
-        pdf.drawImage(
-            logo_path,
-            (page_width - 34 * mm) / 2,
-            y - 18 * mm,
-            width=34 * mm,
-            height=16 * mm,
-            preserveAspectRatio=True,
-            mask='auto',
-        )
-        y -= 22 * mm
+        try:
+            pdf.drawImage(
+                logo_path,
+                (page_width - 34 * mm) / 2,
+                y - 18 * mm,
+                width=34 * mm,
+                height=16 * mm,
+                preserveAspectRatio=True,
+                mask='auto',
+            )
+            y -= 22 * mm
+        except Exception as e:
+            print(f"No se pudo agregar el logo al ticket: {e}")
 
     y = _draw_centered_wrapped_text(pdf, venta.idempresa.razonsocial, y, page_width - 10 * mm, page_width)
     y = _draw_centered_wrapped_text(pdf, f'RUC: {venta.idempresa.ruc}', y, page_width - 10 * mm, page_width, font_size=7)
@@ -567,6 +616,7 @@ def guardarVenta(request):
                                         ruta_pdf='',
                                         ruta_ticket='',
                                         ruta_cdr='',
+                                        ruta_xml='',
                                         respuesta_sunat_descripcion='',
                                         respuesta_sunat_codigo='',
                                         api_id=0)
@@ -605,142 +655,9 @@ def guardarVenta(request):
     venta_creada.ruta_ticket = generar_ticket_pdf_venta(venta_creada)
     venta_creada.save(update_fields=['ruta_ticket'])
 
-    # api sunat --------------
-    detalles_api = []
-
-    for nombre, cantidad, precio in zip(productos, cantidades, precio_unitarios):
-        producto = _buscar_producto_por_nombre_o_barra(nombre)
-
-        tipo_igv_codigo = getTipoIgv.codigo  # 10 o 20
-
-        porcentaje = 18 if str(tipo_igv_codigo) == '10' else 0
-
-        detalles_api.append({
-            "codigo": producto.codigoproducto if hasattr(producto, 'codigoproducto') else nombre,
-            "descripcion": nombre,
-            "unidad": "NIU",
-            "cantidad": float(cantidad),
-            "mto_valor_unitario": float(precio),
-            "porcentaje_igv": porcentaje,
-            "tip_afe_igv": str(tipo_igv_codigo),
-            "codigo_producto_sunat": "10101500"
-        })
-
-    print("Tipo cliente", numserie.idtipodocumento)
-    print("Tipo cliente", tipoCliente)
-    
-    
-    if int(tipoCliente) == 1:
-        tipo_doc_cliente = "6"  # RUC
-    elif int(tipoCliente) == 2:
-        tipo_doc_cliente = "1"  # DNI
-        
-    cliente_api = {
-        "tipo_documento": tipo_doc_cliente,
-        "numero_documento": docCliente,
-        "razon_social": nomcliente,
-        "direccion": direccionCliente,
-        "ubigeo": ubigeo,
-        "distrito": distrito,
-        "provincia": provincia,
-        "departamento": departamento
-    }
-    print("Cliente API:", cliente_api)
-    
-    data_api = {
-        "company_id": 1,
-        "branch_id": 1,
-        "serie": numserie.numserie,
-        "fecha_emision": str(fechaNow),
-        "moneda": "PEN",
-        "tipo_operacion": "0101",
-        "forma_pago_tipo": "Contado",
-        "client": cliente_api,
-        "detalles": detalles_api,
-        "usuario_creacion": "admin",
-        "metodo_envio": "resumen_diario",
-    }
-
-    headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {request.session.get('api_token')}"
-    }
-
-    # =========================
-    # 1. DEFINIR ENDPOINT BASE
-    # =========================
-    if numserie.idtipodocumento.codigosunat == '01':
-        url = "http://localhost:8001/api/v1/invoices"
-        tipo_doc_api = "invoices"
-
-    elif numserie.idtipodocumento.codigosunat == '03':
-        url = "http://localhost:8001/api/v1/boletas"
-        tipo_doc_api = "boletas"
-
-    # =========================
-    # 2. ENVIAR A API
-    # =========================
-    try:
-        response = requests.post(url, json=data_api, headers=headers)
-        response_data = response.json()
-
-        print("Respuesta API:", response_data)
-
-        if response_data.get("success"):
-
-            data = response_data["data"]
-            api_id = data["id"]
-            numero_completo = data["numero_completo"]
-
-            # =========================
-            # 3. GENERAR PDF DINÁMICO
-            # =========================
-            url_pdf = f"http://127.0.0.1:8001/api/v1/{tipo_doc_api}/{api_id}/generate-pdf"
-
-            response_pdf = requests.post(
-                url_pdf,
-                json={"format": "80mm"},
-                headers=headers
-            )
-
-            response_pdf_data = response_pdf.json()
-            print("Respuesta PDF:", response_pdf_data)
-
-            if response_pdf_data.get("success"):
-                pdf_path = response_pdf_data["data"]["pdf_path"]
-                ruta_ticket = f"http://127.0.0.1:8001/storage/{pdf_path}"
-                apiId = response_pdf_data["data"]["document_id"]
-                print("API ID:", api_id)
-                print("Numero completo:", numero_completo)
-                print("Ruta ticket:", ruta_ticket)
-                print("Venta ID:", venta_creada.idventa)
-                Venta.objects.filter(idventa=venta_creada.idventa).update(
-                    ruta_ticket=ruta_ticket,
-                    api_id=apiId
-                )
-            else:
-                print("⚠️ No se generó PDF")
-
-        else:
-            print("Error API:", response_data)
-
-            return JsonResponse({
-                "mensaje": response_data.get("message", "Error al enviar a SUNAT"),
-                "error": True
-            }, status=400)
-
-    except Exception as e:
-        print("Error enviando a API:", e)
-
-        return JsonResponse({
-            "mensaje": str(e),
-            "error": True
-        }, status=500)
 
     return JsonResponse({
         "mensaje": "Venta exitosa",
-        "ruta_ticket": ruta_ticket if 'ruta_ticket' in locals() else None
     })
 
 
@@ -1016,80 +933,128 @@ def custom_json_serializer(obj):
 
 
 def enviarSunat(request, id):
-    venta = Venta.objects.get(idventa=id)
-    tipoDocumento = venta.idnumserie.idtipodocumento.codigosunat
+    venta = Venta.objects.select_related(
+        'idempresa__iddistrito__idprovincia__iddepartamento',
+        'idcliente__id_tipo_entidad',
+        'idnumserie__idtipodocumento',
+        'idmodoPago',
+        'id_tipo_igv',
+    ).get(idventa=id)
+    detalles = VentaDetalle.objects.filter(idventa=venta).select_related(
+        'idproducto__idunidad')
 
-    print("Tipo de documento:", tipoDocumento)
-    print("id api:", venta.api_id)
-
-    if not venta.api_id:
-        return JsonResponse({
-            "error": "La venta aun no tiene api_id para enviarse a SUNAT."
-        }, status=400)
-
-    if tipoDocumento == '01':
-        url = f"http://localhost:8001/api/v1/invoices/{venta.api_id}/send-sunat"
-        base_storage = "http://127.0.0.1:8001/storage/"
-    elif tipoDocumento == '03':
-        url = f"http://localhost:8001/api/v1/boletas/{venta.api_id}/send-sunat"
-        base_storage = "http://127.0.0.1:8001/storage/"
-
-    headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {request.session.get('api_token')}"
-    }
+    empresa = venta.idempresa
+    distrito = empresa.iddistrito
+    provincia = distrito.idprovincia
+    departamento = provincia.iddepartamento
+    tipo_igv_codigo = str(venta.id_tipo_igv.codigo)
 
     try:
-        response = requests.post(url, headers=headers)
-        data = response.json()
+        numero = int(str(venta.numcorrelativo).lstrip('0') or '0')
+    except ValueError:
+        numero = venta.numcorrelativo
 
-        print("Respuesta SUNAT:", data)
+    items = []
+    for detalle in detalles:
+        producto = detalle.idproducto
+        items.append({
+            "producto": producto.nomproducto,
+            "cantidad": _to_float(detalle.cantidad),
+            "precio_base": _to_float(producto.preciounitario),
+            "codigo_sunat": producto.codigo or "-",
+            "codigo_producto": producto.codigo_barras or str(producto.idproducto),
+            "codigo_unidad": producto.idunidad.codigounidad,
+            "tipo_igv_codigo": tipo_igv_codigo,
+        })
 
-        if data.get("success"):
+    payload = {
+        "empresa": {
+            "ruc": empresa.ruc,
+            "razon_social": empresa.razonsocial,
+            "nombre_comercial": empresa.nombrecomercial,
+            "domicilio_fiscal": empresa.direccion,
+            "ubigeo": empresa.ubigueo,
+            "urbanizacion": getattr(empresa, 'urbanizacion', '') or "",
+            "distrito": distrito.nombredistrito,
+            "provincia": provincia.nombreprovincia,
+            "departamento": departamento.nombredepartamento,
+            "modo": str(empresa.mododev),
+            "usu_secundario_produccion_user": empresa.usersec,
+            "usu_secundario_produccion_password": empresa.passwordsec,
+        },
+        "cliente": {
+            "razon_social_nombres": venta.idcliente.razonsocial,
+            "numero_documento": venta.idcliente.numdoc,
+            "codigo_tipo_entidad": venta.idcliente.id_tipo_entidad.codigo,
+            "cliente_direccion": venta.idcliente.direccion,
+        },
+        "venta": {
+            "serie": venta.idnumserie.numserie,
+            "numero": numero,
+            "fecha_emision": custom_json_serializer(venta.fechaemision),
+            "hora_emision": custom_json_serializer(venta.horaemision),
+            "moneda_id": 1,
+            "forma_pago_id": venta.idmodoPago.idmodoPago,
+            "total_gravada": _to_float(venta.total_gravada),
+            "total_igv": _to_float(venta.total_igv),
+            "total_exonerada": _to_float(venta.total_exonerada),
+            "total_inafecta": _to_float(venta.total_inafecta),
+            "tipo_documento_codigo": venta.idnumserie.idtipodocumento.codigosunat,
+            "nota": "notas o comentarios",
+        },
+        "items": items,
+    }
 
-            data_sunat = data["data"]
+    payload_debug = json.loads(json.dumps(payload, default=custom_json_serializer))
+    payload_debug["empresa"]["usu_secundario_produccion_password"] = "***"
+    print("Payload enviado a SUNAT:", json.dumps(
+        payload_debug, ensure_ascii=False, indent=2))
 
-            # =========================
-            # 1. RUTAS
-            # =========================
-            xml_path = data_sunat.get("xml_path")
-            cdr_path = data_sunat.get("cdr_path")
+    try:
+        response = requests.post(
+            "http://localhost/API_SUNAT/post.php",
+            headers={"Content-Type": "application/json"},
+            data=json.dumps(payload, default=custom_json_serializer),
+            timeout=60,
+        )
+        response_json = _extract_json_response(response.text)
+        response_data = response_json.get("data", response_json)
 
-            venta.ruta_pdf = base_storage + xml_path if xml_path else None
-            venta.ruta_cdr = base_storage + cdr_path if cdr_path else None
+        respuesta_sunat_codigo = response_data.get("respuesta_sunat_codigo", "")
+        respuesta_sunat_descripcion = response_data.get(
+            "respuesta_sunat_descripcion", "")
+        ruta_xml = response_data.get("ruta_xml", "")
+        ruta_cdr = response_data.get("ruta_cdr", "")
+        ruta_pdf = response_data.get("ruta_pdf", "")
 
-            # =========================
-            # 2. RESPUESTA SUNAT
-            # =========================
-            respuesta_sunat = data_sunat.get("respuesta_sunat")
+        venta.respuesta_sunat_codigo = respuesta_sunat_codigo or ""
+        venta.respuesta_sunat_descripcion = respuesta_sunat_descripcion or ""
+        venta.ruta_xml = ruta_xml or ""
+        venta.ruta_cdr = ruta_cdr or ""
+        if ruta_pdf:
+            venta.ruta_pdf = ruta_pdf
+        venta.save(update_fields=[
+            "respuesta_sunat_codigo",
+            "respuesta_sunat_descripcion",
+            "ruta_xml",
+            "ruta_cdr",
+            "ruta_pdf",
+        ])
 
-            if respuesta_sunat:
-                respuesta_json = json.loads(respuesta_sunat)
-
-                venta.respuesta_sunat_codigo = respuesta_json.get("code")
-                venta.respuesta_sunat_descripcion = respuesta_json.get(
-                    "description")
-
-            # =========================
-            # 4. GUARDAR
-            # =========================
-            venta.save()
-
-            return JsonResponse({
-                "mensaje": "Enviado a SUNAT correctamente",
-                "codigo_sunat": venta.respuesta_sunat_codigo,
-                "descripcion_sunat": venta.respuesta_sunat_descripcion
-            })
-
-        else:
-            return JsonResponse({
-                "error": "Error al enviar a SUNAT",
-                "detalle": data
-            }, status=400)
+        status = 200 if response.status_code == 200 and respuesta_sunat_codigo == "0" else 400
+        return JsonResponse({
+            "respuesta_sunat_codigo": respuesta_sunat_codigo,
+            "respuesta_sunat_descripcion": respuesta_sunat_descripcion,
+            "ruta_xml": ruta_xml,
+            "ruta_cdr": ruta_cdr,
+            "ruta_pdf": ruta_pdf,
+            "codigo_hash": response_data.get("codigo_hash", ""),
+        }, status=status)
 
     except Exception as e:
         print("Error enviando a SUNAT:", e)
+        if 'response' in locals():
+            print("Contenido de la respuesta:", response.text)
         return JsonResponse({
             "error": str(e)
         }, status=500)
