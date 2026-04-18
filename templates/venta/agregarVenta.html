@@ -285,13 +285,39 @@
                         console.log("Error:", error);
                     }
                 });
-            } else {
+            } 
+            if ($(this).val() == 2) {
                 $.ajax({
                     type: 'POST',
                     url: "{% url 'buscarSerie' %}",
                     dataType: 'json',
                     data: {
                         doc: 3,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function (response) {
+                        // Limpia el select antes de agregar nuevas opciones
+                        $('#serie').empty();
+
+                        $.each(response, function (index, value) {
+                            // Creo y agrego opciones al select
+                            $('#serie').append('<option value="' + value.idnumserie + '">' + value.numserie + '</option>');
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("Error:", error);
+                    }
+                });
+            }
+
+            if($(this).val() == 3) {
+                console.log("Seleccionaste tipo cliente 3");
+                $.ajax({
+                    type: 'POST',
+                    url: "{% url 'buscarSerie' %}",
+                    dataType: 'json',
+                    data: {
+                        doc: 10,
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     },
                     success: function (response) {

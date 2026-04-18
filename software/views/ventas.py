@@ -383,6 +383,7 @@ def agregar(request):
         tipo_documentos = Tipodocumento.objects.all()
         tipo_cliente = Tipocliente.objects.all()
         unidades = Unidades.objects.all()
+        
         # tipo_igv = TipoIgv.objects.all()
         modoPago = Modopago.objects.all()
 
@@ -515,7 +516,8 @@ def guardarVenta(request):
 
     elif int(tipoCliente) == 2:
         tipo_entidad = 1
-
+    elif int(tipoCliente) == 3:
+        tipo_entidad = 3   
     # ss
     serie = request.POST.get('serie')
 
@@ -604,7 +606,9 @@ def guardarVenta(request):
     tipo_cliente = Tipocliente.objects.get(idtipocliente=tipoCliente)
     print("Tipo cliente primero:", tipo_cliente.nomtipocliente)
     # obtener tipo_entidad
+    print("tipo_entidad:", tipo_entidad)
     getTipo_entidad = TipoEntidad.objects.get(id_tipo_entidad=tipo_entidad)
+    print("Tipo entidad:", getTipo_entidad.descripcion)
     # agregar cliente
     cliente = Clientes.objects.create(idtipocliente=tipo_cliente, numdoc=docCliente,
                                       razonsocial=nomcliente, direccion=direccionCliente, estado=1,
