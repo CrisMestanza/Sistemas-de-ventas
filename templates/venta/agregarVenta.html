@@ -101,7 +101,7 @@
                                         aria-label="With textarea">
                                         <option> Seleccione tipo de igv </option>
                                         {% for row in rows %}
-                                        <option value="{{row.1}}"> {{row.2}} </option>
+                                        <option value="{{row.0}}" data-codigo="{{row.1}}"> {{row.2}} </option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -327,20 +327,32 @@
                     },
                     success: function (response) {
 
-                        $('#opcionesBusqueda').empty();
+                        let datalist = currentRow.find('datalist');
+                        datalist.empty();
+                        let textoBuscado = currentRow.find('.busqueda').val().trim();
+
+                        if (response.producto_exacto && response.producto_exacto.codigo_barras == textoBuscado) {
+                            currentRow.find('.busqueda').val(response.producto_exacto.nomproducto);
+                        }
+
                         //Producto precio
                         $.each(response.productos, function (index, value) {
                             precioUnitario = value.preciounitario
                             stockActual1 = value.stockactual
-                            opciones = '<option value="' + value.nomproducto + '"</option>';
+                            opciones = '<option value="' + value.nomproducto + '">' + value.codigo_barras + '</option>';
 
-                            $('#opcionesBusqueda').append(opciones);
+                            datalist.append(opciones);
                             $('#precioUnitario').empty();
                             $('#stockActual').empty();
                             // $('#precioUnitario').val(precioUnitario);
                             currentRow.find('#precioUnitario').val(precioUnitario);
                             currentRow.find('#stockActual').val(stockActual1);
                         });
+
+                        if (response.producto_exacto) {
+                            currentRow.find('#precioUnitario').val(response.producto_exacto.preciounitario);
+                            currentRow.find('#stockActual').val(response.producto_exacto.stockactual);
+                        }
                         //Unidad
                         currentRow.find('#unidad').empty();
                         $.each(response.unidad, function (index, value) {
@@ -542,7 +554,7 @@
             let total = 0;
 
             $('#tabla tbody #total').each(function (index, value) {
-                let idTipo = $("#tipo_igv").val();
+                let idTipo = $("#tipo_igv option:selected").data("codigo");
                 let valor = parseFloat($(this).val());
 
                 if (!isNaN(valor)) {
@@ -554,8 +566,8 @@
 
             total = parseFloat(total.toFixed(2)); // Redondear a 2 decimales después de sumar
 
-            let idTipo = $("#tipo_igv").val();
-            if (idTipo == 1) {
+            let idTipo = String($("#tipo_igv option:selected").data("codigo"));
+            if (idTipo == "10") {
 
                 let igv = parseFloat((total * 0.18).toFixed(2));
                 let totalConIgv = parseFloat((total + igv).toFixed(2));
@@ -565,22 +577,27 @@
                 $(".ventaTotal").val(totalConIgv);
                 $(".totalExonerada").val(0);
 
-            } else if (idTipo == 9) {
+            } else if (idTipo == "20") {
                 $(".totalIgv").val(0);
                 $(".ventaTotal").val(0);
                 $(".totalGravada").val(0);
                 $(".totalExonerada").val(total);
                 $(".ventaTotal").val(total);
+            } else if (idTipo == "30") {
+                $(".totalIgv").val(0);
+                $(".ventaTotal").val(total);
+                $(".totalGravada").val(0);
+                $(".totalExonerada").val(0);
             }
         };
 
 
         //Dependiendo de si selcciona gravado(1) o exonerada(9)
         $("#tipo_igv").change(function () {
-            id = $(this).val();
+            id = String($("#tipo_igv option:selected").data("codigo"));
             $('#pagoTotalPagar').empty();
 
-            if (id == 1) {
+            if (id == "10") {
 
                 campos = '<span><strong>Total Gravada: S/.</strong></span>'
                 campos += '<input type="number" name="totalGravada" class="totalGravada form-control" readonly>'
@@ -598,7 +615,7 @@
                 $('#pagoTotalPagar').append(campos)
             }
 
-            if (id == 9) {
+            if (id == "20" || id == "30") {
 
                 campos = '<span><strong>Total Gravada: S/.</strong></span>'
                 campos += '<input type="number" name="totalGravada" class="totalGravada form-control" readonly>'

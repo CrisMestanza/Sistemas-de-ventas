@@ -47,6 +47,9 @@
                 {% csrf_token %}
 
                 <p><strong>Registro de apertura de caja</strong></p>
+                {% if error %}
+                <p class="text-danger fw-bold">{{ error }}</p>
+                {% endif %}
                 
                 </div>
               

@@ -3,7 +3,7 @@ from datetime import datetime, date, time
 from decimal import Decimal
 from django.db import connection
 from software.views.apiBusquedaRUcDni import ApisNetPe
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseServerError
 from django.shortcuts import redirect, render, get_object_or_404
 import templates
 from software.models.comprasModel import Compras
@@ -42,11 +42,15 @@ from software.models.clientesModel import Clientes
 from software.models.ModopagoModel import Modopago
 from software.models.DepatamentoIgvModel import Detalletipoigvxdepartamento
 from openpyxl import Workbook
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from openpyxl.utils import get_column_letter
 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
+from reportlab.graphics.barcode.qr import QrCodeWidget
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics import renderPDF
 import os
 from django.conf import settings
 from django.templatetags.static import static
@@ -55,6 +59,232 @@ from django.templatetags.static import static
 # Create your views here.
 import requests
 import json
+
+
+def _to_decimal(value):
+    if value in (None, ''):
+        return Decimal('0.00')
+    return Decimal(str(value)).quantize(Decimal('0.01'))
+
+
+def _to_float(value):
+    return float(_to_decimal(value))
+
+
+def _buscar_producto_por_nombre_o_barra(valor):
+    valor = str(valor or '').strip()
+    if not valor:
+        return None
+
+    return Producto.objects.filter(
+        Q(nomproducto__iexact=valor) | Q(codigo_barras__iexact=valor),
+        estado=1,
+    ).first()
+
+
+def _find_empresa_logo(empresa):
+    logo_candidates = []
+    if getattr(empresa, 'logo', None):
+        logo_candidates.append(os.path.join(settings.BASE_DIR, empresa.logo))
+        logo_candidates.append(os.path.join(settings.BASE_DIR, 'static', empresa.logo))
+        logo_candidates.append(os.path.join(settings.BASE_DIR, 'static', 'img', 'empresa', empresa.logo))
+
+    empresa_img_dir = os.path.join(settings.BASE_DIR, 'static', 'img', 'empresa')
+    logo_candidates.append(os.path.join(empresa_img_dir, 'logo.png'))
+
+    if os.path.isdir(empresa_img_dir):
+        for filename in os.listdir(empresa_img_dir):
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                logo_candidates.append(os.path.join(empresa_img_dir, filename))
+
+    for logo_path in logo_candidates:
+        if logo_path and os.path.exists(logo_path):
+            return logo_path
+    return None
+
+
+def _draw_wrapped_text(pdf, text, x, y, max_width, font_name='Helvetica', font_size=7, leading=8):
+    text = str(text or '').strip()
+    if not text:
+        return y
+
+    line = ''
+    pdf.setFont(font_name, font_size)
+    for word in text.split():
+        test_line = f'{line} {word}'.strip()
+        if pdf.stringWidth(test_line, font_name, font_size) <= max_width:
+            line = test_line
+        else:
+            pdf.drawString(x, y, line)
+            y -= leading
+            line = word
+
+    if line:
+        pdf.drawString(x, y, line)
+        y -= leading
+    return y
+
+
+def _draw_centered_wrapped_text(pdf, text, y, max_width, page_width, font_name='Helvetica-Bold', font_size=8, leading=9):
+    text = str(text or '').strip()
+    if not text:
+        return y
+
+    lines = []
+    line = ''
+    for word in text.split():
+        test_line = f'{line} {word}'.strip()
+        if pdf.stringWidth(test_line, font_name, font_size) <= max_width:
+            line = test_line
+        else:
+            lines.append(line)
+            line = word
+    if line:
+        lines.append(line)
+
+    pdf.setFont(font_name, font_size)
+    for line in lines:
+        pdf.drawCentredString(page_width / 2, y, line)
+        y -= leading
+    return y
+
+
+def _sunat_qr_text(venta):
+    return '|'.join([
+        str(venta.idempresa.ruc),
+        str(venta.idnumserie.idtipodocumento.codigosunat),
+        str(venta.idnumserie.numserie),
+        str(venta.numcorrelativo),
+        f'{_to_decimal(venta.total_igv):.2f}',
+        f'{_to_decimal(venta.total_a_pagar):.2f}',
+        venta.fechaemision.strftime('%Y-%m-%d'),
+        str(venta.idcliente.id_tipo_entidad.codigo),
+        str(venta.idcliente.numdoc),
+        str(venta.respuesta_sunat_codigo or ''),
+        '',
+    ])
+
+
+def generar_ticket_pdf_venta(venta):
+    detalles = VentaDetalle.objects.filter(idventa=venta).select_related('idproducto')
+    tipo_documento_codigo = venta.idnumserie.idtipodocumento.codigosunat
+    tipo_documento_nombre = venta.idnumserie.idtipodocumento.nombredocumento
+    carpeta_documento = {
+        '01': 'facturas',
+        '03': 'boletas',
+    }.get(str(tipo_documento_codigo), 'otros')
+
+    tickets_dir = os.path.join(settings.MEDIA_ROOT, 'tickets', carpeta_documento)
+    os.makedirs(tickets_dir, exist_ok=True)
+
+    nombre_archivo = (
+        f'{venta.idempresa.ruc}-{tipo_documento_codigo}-'
+        f'{venta.idnumserie.numserie}-{venta.numcorrelativo}.pdf'
+    )
+    ruta_absoluta = os.path.join(tickets_dir, nombre_archivo)
+    ruta_url = f'{settings.MEDIA_URL}tickets/{carpeta_documento}/{nombre_archivo}'
+
+    page_width = 80 * mm
+    page_height = max(230 * mm, (185 + (detalles.count() * 14)) * mm)
+    margin_x = 5 * mm
+    y = page_height - 6 * mm
+    pdf = canvas.Canvas(ruta_absoluta, pagesize=(page_width, page_height))
+    pdf.setTitle(f'Ticket {venta.idnumserie.numserie}-{venta.numcorrelativo}')
+
+    logo_path = _find_empresa_logo(venta.idempresa)
+    if logo_path:
+        pdf.drawImage(
+            logo_path,
+            (page_width - 34 * mm) / 2,
+            y - 18 * mm,
+            width=34 * mm,
+            height=16 * mm,
+            preserveAspectRatio=True,
+            mask='auto',
+        )
+        y -= 22 * mm
+
+    y = _draw_centered_wrapped_text(pdf, venta.idempresa.razonsocial, y, page_width - 10 * mm, page_width)
+    y = _draw_centered_wrapped_text(pdf, f'RUC: {venta.idempresa.ruc}', y, page_width - 10 * mm, page_width, font_size=7)
+    y = _draw_centered_wrapped_text(pdf, venta.idempresa.direccion, y, page_width - 10 * mm, page_width, font_name='Helvetica', font_size=7)
+    if getattr(venta.idempresa, 'telefono', None):
+        y = _draw_centered_wrapped_text(pdf, f'Tel: {venta.idempresa.telefono}', y, page_width - 10 * mm, page_width, font_name='Helvetica', font_size=7)
+
+    y -= 2 * mm
+    pdf.line(margin_x, y, page_width - margin_x, y)
+    y -= 5 * mm
+    pdf.setFont('Helvetica-Bold', 9)
+    pdf.drawCentredString(page_width / 2, y, tipo_documento_nombre.upper())
+    y -= 4 * mm
+    pdf.drawCentredString(page_width / 2, y, f'{venta.idnumserie.numserie}-{venta.numcorrelativo}')
+    y -= 6 * mm
+
+    pdf.setFont('Helvetica', 7)
+    pdf.drawString(margin_x, y, f'Fecha: {venta.fechaemision.strftime("%d/%m/%Y")} {venta.horaemision}')
+    y -= 4 * mm
+    pdf.drawString(margin_x, y, f'Forma de pago: {venta.idmodoPago.modo_pago}')
+    y -= 4 * mm
+    pdf.drawString(margin_x, y, f'Cliente: {venta.idcliente.razonsocial}')
+    y -= 4 * mm
+    pdf.drawString(margin_x, y, f'Doc: {venta.idcliente.numdoc}')
+    y -= 4 * mm
+    y = _draw_wrapped_text(pdf, f'Dir: {venta.idcliente.direccion}', margin_x, y, page_width - 10 * mm)
+
+    y -= 1 * mm
+    pdf.line(margin_x, y, page_width - margin_x, y)
+    y -= 4 * mm
+    pdf.setFont('Helvetica-Bold', 6.5)
+    pdf.drawString(margin_x, y, 'Cant')
+    pdf.drawString(margin_x + 15 * mm, y, 'Descripcion')
+    pdf.drawRightString(page_width - margin_x, y, 'Importe')
+    y -= 4 * mm
+    pdf.setFont('Helvetica', 6.5)
+
+    for detalle in detalles:
+        cantidad = _to_decimal(detalle.cantidad)
+        precio_unitario = _to_decimal(detalle.idproducto.preciounitario)
+        subtotal = _to_decimal(detalle.preciosubtotal)
+        y = _draw_wrapped_text(pdf, detalle.idproducto.nomproducto, margin_x + 15 * mm, y, page_width - 30 * mm, font_size=6.5, leading=7)
+        pdf.drawString(margin_x, y + 7, f'{cantidad:g}')
+        pdf.drawString(margin_x + 15 * mm, y, f'P.U. {precio_unitario:.2f}')
+        pdf.drawRightString(page_width - margin_x, y, f'{subtotal:.2f}')
+        y -= 5 * mm
+
+    pdf.line(margin_x, y, page_width - margin_x, y)
+    y -= 5 * mm
+    pdf.setFont('Helvetica', 7)
+    pdf.drawRightString(page_width - margin_x - 22 * mm, y, 'Op. Gravada:')
+    pdf.drawRightString(page_width - margin_x, y, f'{_to_decimal(venta.total_gravada):.2f}')
+    y -= 4 * mm
+    pdf.drawRightString(page_width - margin_x - 22 * mm, y, 'Op. Exonerada:')
+    pdf.drawRightString(page_width - margin_x, y, f'{_to_decimal(venta.total_exonerada):.2f}')
+    y -= 4 * mm
+    pdf.drawRightString(page_width - margin_x - 22 * mm, y, 'IGV:')
+    pdf.drawRightString(page_width - margin_x, y, f'{_to_decimal(venta.total_igv):.2f}')
+    y -= 5 * mm
+    pdf.setFont('Helvetica-Bold', 9)
+    pdf.drawRightString(page_width - margin_x - 22 * mm, y, 'TOTAL S/:')
+    pdf.drawRightString(page_width - margin_x, y, f'{_to_decimal(venta.total_a_pagar):.2f}')
+    y -= 8 * mm
+
+    qr_code = QrCodeWidget(_sunat_qr_text(venta))
+    qr_bounds = qr_code.getBounds()
+    qr_width = qr_bounds[2] - qr_bounds[0]
+    qr_height = qr_bounds[3] - qr_bounds[1]
+    qr_size = 28 * mm
+    qr_drawing = Drawing(qr_size, qr_size, transform=[qr_size / qr_width, 0, 0, qr_size / qr_height, 0, 0])
+    qr_drawing.add(qr_code)
+    renderPDF.draw(qr_drawing, pdf, (page_width - qr_size) / 2, y - qr_size)
+    y -= qr_size + 4 * mm
+
+    pdf.setFont('Helvetica', 6.5)
+    pdf.drawCentredString(page_width / 2, y, 'Representacion impresa del comprobante electronico')
+    y -= 4 * mm
+    pdf.drawCentredString(page_width / 2, y, 'Consulte su comprobante con el codigo QR')
+
+    pdf.showPage()
+    pdf.save()
+    return ruta_url
 
 
 def ventas(request):
@@ -101,20 +331,9 @@ def agregar(request):
 
         # TIpo documento
         with connection.cursor() as cursor:
-            # cursor.execute("""
-            #     SELECT d.nombredepartamento, ti.id_tipo_igv, ti.tipo_igv
-            #     FROM facsiswave.detalletipoigvxdepartamento dp
-            #     INNER JOIN tipo_igvs ti ON ti.id_tipo_igv = dp.id_tipo_igv
-            #     INNER JOIN departamentos d ON d.iddepartamentos = dp.iddepartamentos
-            #     WHERE d.iddepartamentos = %s
-            # """, [id_departamento])
-            # rows = cursor.fetchall()
             cursor.execute("""
-                SELECT d.nombredepartamento, ti.id_tipo_igv, ti.tipo_igv
-                FROM facsiswave.detalletipoigvxdepartamento dp
-                INNER JOIN tipo_igvs ti ON ti.id_tipo_igv = dp.id_tipo_igv
-                INNER JOIN departamentos d ON d.iddepartamentos = dp.iddepartamentos
-   
+                SELECT id_tipo_igv, codigo, tipo_igv
+                FROM facsiswave.tipo_igvs
             """)
             rows = cursor.fetchall()
 
@@ -141,19 +360,44 @@ def buscarSerie(request):
 def buscarProducto(request):
 
     if request.method == 'POST':
-        busqueda = request.POST.get('busqueda')
+        busqueda = str(request.POST.get('busqueda') or '').strip()
+
+        if not busqueda:
+            return JsonResponse({
+                'productos': [],
+                'unidad': [],
+                'producto_exacto': None,
+            }, safe=False)
 
         productos = Producto.objects.filter(
-            nomproducto__icontains=busqueda, estado=1)
+            Q(nomproducto__icontains=busqueda) | Q(codigo_barras__icontains=busqueda),
+            estado=1,
+        ).order_by('nomproducto')
+
+        producto_exacto = Producto.objects.filter(
+            Q(nomproducto__iexact=busqueda) | Q(codigo_barras__iexact=busqueda),
+            estado=1,
+        ).first()
+
+        producto_unidad = producto_exacto or productos.first()
         unidad = Unidades.objects.filter(
-            idunidad=productos[0].idunidad.idunidad)
+            idunidad=producto_unidad.idunidad.idunidad) if producto_unidad else Unidades.objects.none()
 
         unidad_list = list(unidad.values())
         productos_list = list(productos.values())
+        producto_exacto_data = {
+            'idproducto': producto_exacto.idproducto,
+            'nomproducto': producto_exacto.nomproducto,
+            'preciounitario': producto_exacto.preciounitario,
+            'stockactual': producto_exacto.stockactual,
+            'codigo_barras': producto_exacto.codigo_barras,
+            'idunidad': producto_exacto.idunidad.idunidad,
+        } if producto_exacto else None
 
         response_data = {
             'productos': productos_list,
             'unidad': unidad_list,
+            'producto_exacto': producto_exacto_data,
         }
 
         return JsonResponse(response_data, safe=False)
@@ -230,6 +474,24 @@ def guardarVenta(request):
     tipo_igv = request.POST.get('tipo_igv')
 
     getTipoIgv = TipoIgv.objects.get(id_tipo_igv=tipo_igv)
+    subtotal_productos = sum((_to_decimal(sub_total) for sub_total in sub_totales), Decimal('0.00'))
+
+    if not totalGravada and not totalExonerada and not totalIgv and not ventaTotal:
+        if getTipoIgv.codigo == '10':
+            totalGravada = subtotal_productos
+            totalIgv = (subtotal_productos * Decimal('0.18')).quantize(Decimal('0.01'))
+            totalExonerada = Decimal('0.00')
+            ventaTotal = totalGravada + totalIgv
+        elif getTipoIgv.codigo == '20':
+            totalGravada = Decimal('0.00')
+            totalIgv = Decimal('0.00')
+            totalExonerada = subtotal_productos
+            ventaTotal = subtotal_productos
+        elif getTipoIgv.codigo == '30':
+            totalGravada = Decimal('0.00')
+            totalIgv = Decimal('0.00')
+            totalExonerada = Decimal('0.00')
+            ventaTotal = subtotal_productos
 
     # Empresa
     getEmpresa = Empresa.objects.get(idempresa=1)
@@ -252,7 +514,7 @@ def guardarVenta(request):
     productos_sin_stock = []
 
     for nombre, cantidad in zip(productos, cantidades):
-        obtener_producto = Producto.objects.filter(nomproducto=nombre).first()
+        obtener_producto = _buscar_producto_por_nombre_o_barra(nombre)
 
         if obtener_producto:
             stockActual = obtener_producto.stockactual
@@ -296,16 +558,24 @@ def guardarVenta(request):
                                         id_tipo_igv=getTipoIgv,
                                         idempresa=getEmpresa,
                                         idmodoPago=getTipoPago,
-                                        total_gravada=totalGravada,
-                                        total_igv=totalIgv,
-                                        total_exonerada=totalExonerada,
-                                        total_a_pagar=ventaTotal)
+                                        total_gravada=_to_decimal(totalGravada),
+                                        total_igv=_to_decimal(totalIgv),
+                                        total_gratuita=Decimal('0.00'),
+                                        total_exonerada=_to_decimal(totalExonerada),
+                                        total_inafecta=Decimal('0.00'),
+                                        total_a_pagar=_to_decimal(ventaTotal),
+                                        ruta_pdf='',
+                                        ruta_ticket='',
+                                        ruta_cdr='',
+                                        respuesta_sunat_descripcion='',
+                                        respuesta_sunat_codigo='',
+                                        api_id=0)
 
     # new_list= zip(productos,unidades,cantidades,precio_unitarios,sub_totales)
 
     for nombre, cantidad_subtotal, sub_total in zip(productos, cantidades, sub_totales):
 
-        obtener_producto = Producto.objects.filter(nomproducto=nombre).first()
+        obtener_producto = _buscar_producto_por_nombre_o_barra(nombre)
         stockActual = obtener_producto.stockactual
         # if stockActual < int(cantidad_subtotal):
         #     return redirect('agregarVenta')
@@ -320,26 +590,30 @@ def guardarVenta(request):
     # Para transaccion
     ultimo_registro = Caja.objects.order_by('-id_caja').first()
 
-    caja = Caja.objects.get(id_caja=ultimo_registro.id_caja)
-    tipoTransaccion = TipoTransaccion.objects.get(id_tipo_transaccion=1)
+    if ultimo_registro:
+        caja = Caja.objects.get(id_caja=ultimo_registro.id_caja)
+        tipoTransaccion = TipoTransaccion.objects.get(id_tipo_transaccion=1)
 
-    transaccion = Transaccion()
-    transaccion.id_caja = caja
-    transaccion.id_tipo_transaccion = tipoTransaccion
-    transaccion.monto = ventaTotal
-    transaccion.fecha = fechaNow
-    transaccion.hora = hora_actual_formateada
-    transaccion.save()
+        transaccion = Transaccion()
+        transaccion.id_caja = caja
+        transaccion.id_tipo_transaccion = tipoTransaccion
+        transaccion.monto = _to_decimal(ventaTotal)
+        transaccion.fecha = fechaNow
+        transaccion.hora = hora_actual_formateada
+        transaccion.save()
+
+    venta_creada.ruta_ticket = generar_ticket_pdf_venta(venta_creada)
+    venta_creada.save(update_fields=['ruta_ticket'])
 
     # api sunat --------------
     detalles_api = []
 
     for nombre, cantidad, precio in zip(productos, cantidades, precio_unitarios):
-        producto = Producto.objects.filter(nomproducto=nombre).first()
+        producto = _buscar_producto_por_nombre_o_barra(nombre)
 
         tipo_igv_codigo = getTipoIgv.codigo  # 10 o 20
 
-        porcentaje = 18 if tipo_igv_codigo == 10 else 0
+        porcentaje = 18 if str(tipo_igv_codigo) == '10' else 0
 
         detalles_api.append({
             "codigo": producto.codigoproducto if hasattr(producto, 'codigoproducto') else nombre,
@@ -579,7 +853,7 @@ def guardarEditar(request):
                   sub_totales, idproductos)
     productos_sin_stock = []
     for nombre, cantidad in zip(nombres, cantidades):
-        obtener_producto = Producto.objects.filter(nomproducto=nombre).first()
+        obtener_producto = _buscar_producto_por_nombre_o_barra(nombre)
 
         if obtener_producto:
             stockActual = obtener_producto.stockactual
@@ -610,8 +884,7 @@ def guardarEditar(request):
 
             if venta_detalle:
                 # Sumo la cantidad antes puesta y resto el nuevo
-                obtener_producto = Producto.objects.filter(
-                    nomproducto=nombre).first()
+                obtener_producto = _buscar_producto_por_nombre_o_barra(nombre)
                 stockActual = obtener_producto.stockactual + venta_detalle.cantidad
                 obtener_producto.stockactual = stockActual - Decimal(cantidad)
                 obtener_producto.save()
@@ -624,7 +897,9 @@ def guardarEditar(request):
         else:
             print("Entro a crear")
             # Si no hay id_producto, busca el producto por su nombre y resta el stock
-            producto = Producto.objects.get(nomproducto=nombre)
+            producto = _buscar_producto_por_nombre_o_barra(nombre)
+            if not producto:
+                return JsonResponse({"error": f"Producto {nombre} no encontrado"})
             stockActual = producto.stockactual
             producto.stockactual = stockActual - int(cantidad)
             producto.save()
@@ -747,6 +1022,11 @@ def enviarSunat(request, id):
     print("Tipo de documento:", tipoDocumento)
     print("id api:", venta.api_id)
 
+    if not venta.api_id:
+        return JsonResponse({
+            "error": "La venta aun no tiene api_id para enviarse a SUNAT."
+        }, status=400)
+
     if tipoDocumento == '01':
         url = f"http://localhost:8001/api/v1/invoices/{venta.api_id}/send-sunat"
         base_storage = "http://127.0.0.1:8001/storage/"
@@ -806,10 +1086,10 @@ def enviarSunat(request, id):
             return JsonResponse({
                 "error": "Error al enviar a SUNAT",
                 "detalle": data
-            })
+            }, status=400)
 
     except Exception as e:
         print("Error enviando a SUNAT:", e)
         return JsonResponse({
             "error": str(e)
-        })
+        }, status=500)

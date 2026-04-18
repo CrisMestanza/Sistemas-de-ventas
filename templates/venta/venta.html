@@ -270,6 +270,21 @@ $(document).ready(function() {
                       window.location.href='ventas'
                     });
                   },
+                  error: function(xhr) {
+                    let mensaje = "No se pudo enviar a SUNAT";
+
+                    if (xhr.responseJSON && xhr.responseJSON.respuesta_descripcion) {
+                      mensaje = xhr.responseJSON.respuesta_descripcion;
+                    } else if (xhr.responseJSON && xhr.responseJSON.detalle) {
+                      mensaje = JSON.stringify(xhr.responseJSON.detalle);
+                    } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                      mensaje = xhr.responseJSON.error;
+                    }
+
+                    Swal.fire("SUNAT rechazo el comprobante", mensaje, "error").then(()=>{
+                      window.location.href='ventas'
+                    });
+                  },
 
                 });
                

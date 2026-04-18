@@ -60,12 +60,10 @@ def login(request):
                 print("Error al consumir API:", str(e))
 
             ultimo_registro = Caja.objects.order_by('-id_caja').first()
-            if ultimo_registro.estado == 1:
+            if ultimo_registro and ultimo_registro.estado == 1:
 
                 return redirect('cpanel')
-            else:
-
-                return render(request, 'caja/caja.html')
+            return render(request, 'caja/caja.html')
 
         else:
             error = "Correo o contraseña incorrecta"
@@ -89,9 +87,22 @@ def logout(request):
 # Para caja
 def caja(request):
     monto = request.POST.get('monto')
+    idusuario = request.session.get('idusuario')
+
+    if not idusuario:
+        return redirect('index')
+
+    if not monto:
+        return render(request, 'caja/caja.html', {
+            'error': 'Ingrese el monto inicial para abrir caja.'
+        })
 
     # Obtener el usuario actual desde la sesión
-    usuario = Usuario.objects.get(idusuario=request.session.get('idusuario'))
+    usuario = Usuario.objects.get(idusuario=idusuario)
+
+    caja_abierta = Caja.objects.filter(estado=1).order_by('-id_caja').first()
+    if caja_abierta:
+        return redirect('cpanel')
 
     # Obtener la fecha y hora actual en el huso horario de Lima (Perú)
     ahora = timezone.localtime(timezone.now())

@@ -50,7 +50,7 @@ def cpanel(request):
             cursor.execute("""
                 SELECT 
                     DATE_FORMAT(`venta`.`fechaemision`, '%Y %M') AS `mes_anio`, 
-                    FORMAT(SUM(`venta_detalle`.`preciosubtotal`), 2) AS `total`
+                    COALESCE(SUM(`venta_detalle`.`preciosubtotal`), 0) AS `total`
                 FROM `venta`
                 INNER JOIN `venta_detalle` ON (`venta`.`idventa` = `venta_detalle`.`idventa`)
                 WHERE `venta`.`estado` = 1
@@ -60,22 +60,22 @@ def cpanel(request):
             rows = cursor.fetchall()
 
         # Calcular el total general de ventas
-        total_general = sum(float(row[1]) for row in rows)
+        total_general = sum(Decimal(str(row[1] or 0)) for row in rows)
 
         # Preparar datos para el gráfico de Highcharts
         chart_data = []
         for row in rows:
-            total_venta = float(row[1])
-            porcentaje = (total_venta / total_general) * 100 if total_general > 0 else 0.0
+            total_venta = Decimal(str(row[1] or 0))
+            porcentaje = (total_venta / total_general) * 100 if total_general > 0 else Decimal('0.00')
             chart_data.append({
                 'name': row[0],  # mes_anio
-                'y': total_venta,  # total de ventas
-                'porcentaje': round(porcentaje, 2)  # porcentaje redondeado a 2 decimales
+                'y': float(total_venta),  # total de ventas
+                'porcentaje': float(round(porcentaje, 2))  # porcentaje redondeado a 2 decimales
             })
             
         ultimo_registro = Caja.objects.order_by('-id_caja').first()
         
-        if ultimo_registro.estado ==1:
+        if ultimo_registro and ultimo_registro.estado == 1:
             cerrar = "Caja está abierto"
         else:
             cerrar = None

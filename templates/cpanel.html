@@ -58,7 +58,13 @@
           <div class="card-body">
             <h5 class="card-title">Cpanel</h5>
             <figure class="highcharts-figure">
+              {% if chart_data %}
               <div id="container"></div>
+              {% else %}
+              <div class="alert alert-info">
+                Aun no hay ventas registradas para mostrar en el grafico.
+              </div>
+              {% endif %}
               <p class="highcharts-description">
                 Gráfico de ventas totales por mes.
               </p>
@@ -72,6 +78,7 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    {% if chart_data %}
     Highcharts.chart('container', {
       chart: {
         type: 'pie'
@@ -98,9 +105,10 @@
       series: [{
         name: 'Porcentaje',
         colorByPoint: true,
-        data: {{ chart_data| safe }}
+        data: {{ chart_data|safe }}
         }]
     });
+    {% endif %}
   });
 </script>
 <script>
