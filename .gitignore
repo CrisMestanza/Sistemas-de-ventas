@@ -1,0 +1,59 @@
+# 🔹 Entorno virtual
+env/
+venv/
+ENV/
+.env/
+
+# 🔹 Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 🔹 Django
+*.log
+db.sqlite3
+media/
+staticfiles/
+
+# 🔹 Archivos de entorno
+.env
+.env.*
+
+# 🔹 VS Code
+.vscode/
+
+# 🔹 PyCharm
+.idea/
+
+# 🔹 Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# 🔹 Archivos temporales
+*.swp
+*.tmp
+
+# 🔹 Build / dist
+build/
+dist/
+*.egg-info/
+
+# 🔹 Archivos de cobertura/test
+htmlcov/
+.coverage
+.tox/
+.pytest_cache/
+
+# 🔹 Logs
+*.log
+
+# 🔹 Archivos de facturación (opcional si generas XML/PDF)
+media/tickets/
+media/cdr/
+media/xml/
+media/pdf/
+
+# 🔹 Certificados (MUY IMPORTANTE no subir)
+*.pem
+*.key
+*.crt
