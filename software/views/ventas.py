@@ -251,16 +251,18 @@ def generar_ticket_pdf_venta(venta):
     logo_path = _prepare_ticket_logo(_find_empresa_logo(venta.idempresa))
     if logo_path:
         try:
+            logo_width = 44 * mm
+            logo_height = 22 * mm
             pdf.drawImage(
                 logo_path,
-                (page_width - 34 * mm) / 2,
-                y - 18 * mm,
-                width=34 * mm,
-                height=16 * mm,
+                (page_width - logo_width) / 2,
+                y - logo_height,
+                width=logo_width,
+                height=logo_height,
                 preserveAspectRatio=True,
                 mask='auto',
             )
-            y -= 22 * mm
+            y -= 26 * mm
         except Exception as e:
             print(f"No se pudo agregar el logo al ticket: {e}")
 
@@ -281,13 +283,14 @@ def generar_ticket_pdf_venta(venta):
 
     pdf.setFont('Helvetica', 7)
     pdf.drawString(margin_x, y, f'Fecha: {venta.fechaemision.strftime("%d/%m/%Y")} {venta.horaemision}')
-    y -= 4 * mm
+    y -= 5 * mm
+    pdf.setFont('Helvetica', 8.5)
     pdf.drawString(margin_x, y, f'Forma de pago: {venta.idmodoPago.modo_pago}')
-    y -= 4 * mm
+    y -= 5 * mm
     pdf.drawString(margin_x, y, f'Cliente: {venta.idcliente.razonsocial}')
-    y -= 4 * mm
+    y -= 5 * mm
     pdf.drawString(margin_x, y, f'Doc: {venta.idcliente.numdoc}')
-    y -= 4 * mm
+    y -= 5 * mm
     y = _draw_wrapped_text(pdf, f'Dir: {venta.idcliente.direccion}', margin_x, y, page_width - 10 * mm)
 
     y -= 1 * mm

@@ -32,6 +32,7 @@ from software.models.clientesModel import Clientes
 from django.db import connection
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
+import re
 
 
 # Create your views here.
@@ -83,28 +84,52 @@ def agregar(request):
 
 
 def editado(request):
-    idproducto2 = request.POST.get('idproducto2')
-    categoria = request.POST.get('categoria2')
-    unidad = request.POST.get('unidad2')
-    nombreProducto = request.POST.get('nombreProducto2')
-    descripcionProducto = request.POST.get('descripcionProducto2')
-    precioProducto2 = request.POST.get('precioProducto2')
-    stockProducto = request.POST.get('stockProducto2')
-    precioCompraPost = request.POST.get('precioCompra2')
+    def _normalizar_fk_id(valor):
+        if valor in (None, ''):
+            return None
+        valor_str = str(valor).strip()
+        if valor_str.isdigit():
+            return int(valor_str)
+        match = re.search(r'\((\d+)\)', valor_str)
+        if match:
+            return int(match.group(1))
+        return None
 
-    categoriaId = Categoria.objects.get(idcategoria=categoria)
-    unidadId = Unidades.objects.get(idunidad=unidad)
-    
-    precioCompraPost2 = float(precioCompraPost.replace(',', '.'))
-    precioProducto3 = float(precioProducto2.replace(',', '.'))
-    Producto.objects.filter(idproducto=idproducto2).update(idcategoria=categoria,
-                                                           idunidad=unidadId,
-                                                           nomproducto=nombreProducto,
-                                                           descripcion=descripcionProducto, 
-                                                           preciounitario=precioProducto3,
-                                                           precioCompra=precioCompraPost2,
-                                                           stockactual=stockProducto, 
-                                                           estado=1)
+    idproducto2 = request.POST.get('idproducto2')
+    if not idproducto2:
+        return redirect('productos')
+
+    campos_actualizar = {}
+
+    categoria = _normalizar_fk_id(request.POST.get('categoria2'))
+    if categoria is not None:
+        campos_actualizar['idcategoria_id'] = categoria
+
+    unidad = _normalizar_fk_id(request.POST.get('unidad2'))
+    if unidad is not None:
+        campos_actualizar['idunidad_id'] = unidad
+
+    if 'nombreProducto2' in request.POST:
+        campos_actualizar['nomproducto'] = request.POST.get('nombreProducto2')
+
+    if 'descripcionProducto2' in request.POST:
+        campos_actualizar['descripcion'] = request.POST.get('descripcionProducto2')
+
+    precio_producto = request.POST.get('precioProducto2')
+    if precio_producto not in (None, ''):
+        campos_actualizar['preciounitario'] = float(precio_producto.replace(',', '.'))
+
+    precio_compra = request.POST.get('precioCompra2')
+    if precio_compra not in (None, ''):
+        campos_actualizar['precioCompra'] = float(precio_compra.replace(',', '.'))
+
+    stock_producto = request.POST.get('stockProducto2')
+    if stock_producto not in (None, ''):
+        campos_actualizar['stockactual'] = stock_producto
+
+    if campos_actualizar:
+        Producto.objects.filter(idproducto=idproducto2).update(**campos_actualizar)
+
     return redirect('productos')
 
 def eliminar(request, idproducto):

@@ -191,7 +191,7 @@
 
                             <label for="nombreProducto2">Categoria</label><br>
                             <select class="form-select" aria-label="Default select example" name="categoria2">
-                              <option value="{{producto.idcategoria}}">{{producto.idcategoria.nomcategoria}}</option>
+                              <option value="{{producto.idcategoria.idcategoria}}">{{producto.idcategoria.nomcategoria}}</option>
                               {% for categoria in categorias %}
                               <option value="{{categoria.idcategoria}}">{{categoria.nomcategoria}}</option>
                               {% endfor %}
@@ -199,7 +199,7 @@
 
                             <label for="nombreProducto2">Unidad</label><br>
                             <select class="form-select" aria-label="Default select example" name="unidad2">
-                              <option value="{{producto.idunidad}}">{{producto.idunidad.abrunidad}}</option>
+                              <option value="{{producto.idunidad.idunidad}}">{{producto.idunidad.abrunidad}}</option>
                               {% for unidad in unidades %}
                               <option value="{{unidad.idunidad}}">{{unidad.abrunidad}}</option>
                               {% endfor %}

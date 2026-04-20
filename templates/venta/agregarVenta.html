@@ -337,11 +337,36 @@
 
         });
         
+        let datalistCounter = 0;
+        const asegurarDatalistFila = (currentRow) => {
+            let inputBusqueda = currentRow.find('.busqueda');
+            let datalist = currentRow.find('datalist');
+
+            if (!datalist.length || !inputBusqueda.length) {
+                return null;
+            }
+
+            let listId = datalist.attr('id');
+            let idDuplicado = listId && $('[id="' + listId + '"]').length > 1;
+            if (!listId || idDuplicado) {
+                datalistCounter += 1;
+                listId = 'opcionesBusqueda_' + datalistCounter;
+                datalist.attr('id', listId);
+            }
+
+            inputBusqueda.attr('list', listId);
+            return datalist;
+        };
+
         //Hacer busqueda de precio unitario del producto escrito en el input descripción
         let busqueda = () => {
-            $(".busqueda").on('input', function (e) {
+            $(document).off('input', '.busqueda').on('input', '.busqueda', function (e) {
 
                 let currentRow = $(this).closest('tr');
+                let datalist = asegurarDatalistFila(currentRow);
+                if (!datalist) {
+                    return;
+                }
 
                 $.ajax({
                     type: "POST",
@@ -353,7 +378,6 @@
                     },
                     success: function (response) {
 
-                        let datalist = currentRow.find('datalist');
                         datalist.empty();
                         let textoBuscado = currentRow.find('.busqueda').val().trim();
 
@@ -400,7 +424,7 @@
 
             let nuevaFila = '<tr>';
 
-            nuevaFila += '<td><div class="input-group"><input class="form-control busqueda" type="list" list="opcionesBusqueda" aria-label="With textarea" name="producto[nombre][]"><datalist id="opcionesBusqueda"></datalist></div></td>';
+            nuevaFila += '<td><div class="input-group"><input class="form-control busqueda" type="list" aria-label="With textarea" name="producto[nombre][]"><datalist></datalist></div></td>';
 
             nuevaFila += '<td><div class="input-group"><select name="producto[unidad][]" id="unidad" class="form-control" aria-label="With textarea">'
             nuevaFila += '<td><div class="input-group"><input class="form-control" type="number" readonly    id="stockActual"aria-label="With textarea"></div></td>'
@@ -419,6 +443,7 @@
             button = '<button type="button"  class="btn btn-primary">Agregar Producto</button>'
 
             $('tbody').append(nuevaFila);
+            asegurarDatalistFila($('#tabla tbody tr:last'));
 
             busqueda();
 
@@ -434,6 +459,9 @@
         });
 
 
+        $('#tabla tbody tr').each(function () {
+            asegurarDatalistFila($(this));
+        });
         busqueda();
 
 
