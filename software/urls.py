@@ -15,6 +15,7 @@ from .views import numeroserie
 from .views import cerrarcaja
 from .views import registroCaja
 from .views import transaccion
+from .views import proveedores
 
 urlpatterns = [
     #login
@@ -78,6 +79,12 @@ urlpatterns = [
     path('productos/agregar', productos.agregar, name="productosAgregar"),
     path('productos/editar', productos.editado, name="productosEditado"),
     path('productos/eliminarProducto/<int:idproducto>', productos.eliminar, name="eliminarProducto"),
+
+    #proveedores
+    path('proveedores', proveedores.proveedores, name="proveedores"),
+    path('proveedores/agregar', proveedores.agregar, name="proveedoresAgregar"),
+    path('proveedores/editar', proveedores.editar, name="proveedoresEditar"),
+    path('proveedores/eliminar/<int:id>', proveedores.eliminar, name="proveedoresEliminar"),
     
     #Lotes
     path('productos/verLotes/<int:id>', productos.verLotes, name="verLotes"),
