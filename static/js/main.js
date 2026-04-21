@@ -301,7 +301,46 @@
    */
   const datatables = select('.datatable', true)
   datatables.forEach(datatable => {
-    new simpleDatatables.DataTable(datatable);
+    const dataTable = new simpleDatatables.DataTable(datatable, {
+      sensitivity: 'base',
+      ignorePunctuation: true
+    });
+
+    let searchTimeout;
+    const searchInput = dataTable.wrapperDOM.querySelector('.datatable-input');
+
+    const runSearch = () => {
+      if (!searchInput) return;
+
+      const query = searchInput.value.trim();
+
+      if (!query.length) {
+        dataTable.search('');
+        return;
+      }
+
+      for (let length = query.length; length > 0; length--) {
+        dataTable.search(query.substring(0, length).trim());
+
+        if (dataTable._searchData.length || length === 1) {
+          break;
+        }
+      }
+    };
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function(e) {
+        e.stopPropagation();
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(runSearch, 100);
+      }, true);
+
+      searchInput.addEventListener('paste', function(e) {
+        e.stopPropagation();
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(runSearch, 200);
+      }, true);
+    }
   })
 
   /**
