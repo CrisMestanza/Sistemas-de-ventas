@@ -62,7 +62,6 @@ from PIL import Image
 import requests
 import json
 
-
 def _to_decimal(value):
     if value in (None, ''):
         return Decimal('0.00')
@@ -71,6 +70,85 @@ def _to_decimal(value):
 
 def _to_float(value):
     return float(_to_decimal(value))
+
+
+def _table_has_column(table_name, column_name):
+    with connection.cursor() as cursor:
+        cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE %s", [column_name])
+        return cursor.fetchone() is not None
+
+
+def _normalizar_detalle_producto(detalle):
+    detalle = str(detalle or '').strip()
+    return detalle if detalle else '-'
+
+
+def _guardar_resumen_detalle_venta(idventa, detalles_producto):
+    if not _table_has_column('venta', 'detalle'):
+        return
+
+    resumen = ' | '.join(
+        detalle for detalle in (_normalizar_detalle_producto(valor) for valor in detalles_producto)
+        if detalle and detalle != '-'
+    ) or '-'
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE `venta` SET `detalle`=%s WHERE `idventa`=%s",
+            [resumen, idventa],
+        )
+
+
+def _guardar_detalle_linea(idventadetalle, detalle):
+    if not _table_has_column('venta_detalle', 'detalle'):
+        return
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE `venta_detalle` SET `detalle`=%s WHERE `idventadetalle`=%s",
+            [_normalizar_detalle_producto(detalle), idventadetalle],
+        )
+
+
+def _obtener_detalle_map(idventa):
+    if not _table_has_column('venta_detalle', 'detalle'):
+        return {}
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT `idventadetalle`, COALESCE(NULLIF(TRIM(`detalle`), ''), '-') FROM `venta_detalle` WHERE `idventa`=%s",
+            [idventa],
+        )
+        return {row[0]: row[1] for row in cursor.fetchall()}
+
+
+def _obtener_items_venta(idventa):
+    detalles = VentaDetalle.objects.filter(idventa=idventa).select_related('idproducto')
+    detalle_map = _obtener_detalle_map(idventa)
+    items = []
+
+    for detalle in detalles:
+        cantidad = _to_decimal(detalle.cantidad)
+        subtotal = _to_decimal(detalle.preciosubtotal)
+        detalle_texto = str(getattr(detalle, 'detalle', '') or '').strip()
+        if not detalle_texto:
+            detalle_texto = detalle_map.get(detalle.idventadetalle, '-')
+        detalle_texto = _normalizar_detalle_producto(detalle_texto)
+        if cantidad:
+            precio_venta = (subtotal / cantidad).quantize(Decimal('0.01'))
+        else:
+            precio_venta = _to_decimal(detalle.idproducto.preciounitario)
+
+        items.append({
+            'idventadetalle': detalle.idventadetalle,
+            'producto': detalle.idproducto.nomproducto,
+            'detalle': detalle_texto,
+            'cantidad': cantidad,
+            'subtotal': subtotal,
+            'precio_venta': precio_venta,
+        })
+
+    return items
 
 
 def _extract_json_response(response_text):
@@ -223,7 +301,7 @@ def _sunat_qr_text(venta):
 
 
 def generar_ticket_pdf_venta(venta):
-    detalles = VentaDetalle.objects.filter(idventa=venta).select_related('idproducto')
+    detalles = _obtener_items_venta(venta.idventa)
     tipo_documento_codigo = venta.idnumserie.idtipodocumento.codigosunat
     tipo_documento_nombre = venta.idnumserie.idtipodocumento.nombredocumento
     carpeta_documento = {
@@ -242,7 +320,7 @@ def generar_ticket_pdf_venta(venta):
     ruta_url = f'{settings.MEDIA_URL}tickets/{carpeta_documento}/{nombre_archivo}'
 
     page_width = 80 * mm
-    page_height = max(230 * mm, (185 + (detalles.count() * 14)) * mm)
+    page_height = max(230 * mm, (185 + (len(detalles) * 18)) * mm)
     margin_x = 5 * mm
     y = page_height - 6 * mm
     pdf = canvas.Canvas(ruta_absoluta, pagesize=(page_width, page_height))
@@ -304,10 +382,20 @@ def generar_ticket_pdf_venta(venta):
     pdf.setFont('Helvetica', 6.5)
 
     for detalle in detalles:
-        cantidad = _to_decimal(detalle.cantidad)
-        precio_unitario = _to_decimal(detalle.idproducto.preciounitario)
-        subtotal = _to_decimal(detalle.preciosubtotal)
-        y = _draw_wrapped_text(pdf, detalle.idproducto.nomproducto, margin_x + 15 * mm, y, page_width - 30 * mm, font_size=6.5, leading=7)
+        cantidad = detalle['cantidad']
+        precio_unitario = detalle['precio_venta']
+        subtotal = detalle['subtotal']
+        y = _draw_wrapped_text(pdf, detalle['producto'], margin_x + 15 * mm, y, page_width - 30 * mm, font_size=6.5, leading=7)
+        if detalle['detalle'] and detalle['detalle'] != '-':
+            y = _draw_wrapped_text(
+                pdf,
+                f"Detalle: {detalle['detalle']}",
+                margin_x + 15 * mm,
+                y,
+                page_width - 30 * mm,
+                font_size=6,
+                leading=6.5,
+            )
         pdf.drawString(margin_x, y + 7, f'{cantidad:g}')
         pdf.drawString(margin_x + 15 * mm, y, f'P.U. {precio_unitario:.2f}')
         pdf.drawRightString(page_width - margin_x, y, f'{subtotal:.2f}')
@@ -366,7 +454,8 @@ def ventas(request):
                 INNER JOIN `clientes` ON (`clientes`.`idcliente` = `venta`.`idcliente`)
                 WHERE `venta`.`estado` = 1
                 GROUP BY `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`fechaemision`,
-                `numserie`.`numserie`, `venta`.`numcorrelativo` 
+                `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`,
+                `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`
                 Order By `venta`.`idventa` DESC
                 
             """)
@@ -541,6 +630,10 @@ def guardarVenta(request):
         str(producto or '').strip()
         for producto in request.POST.getlist('producto[nombre][]')
     ]
+    detalles_producto = [
+        _normalizar_detalle_producto(detalle)
+        for detalle in request.POST.getlist('producto[detalle][]')
+    ]
     unidades = request.POST.getlist('producto[unidad][]')
     cantidades = request.POST.getlist('producto[cantidad][]')
     precio_unitarios = request.POST.getlist('producto[precioUnitario][]')
@@ -646,13 +739,15 @@ def guardarVenta(request):
                                         ruta_ticket='',
                                         ruta_cdr='',
                                         ruta_xml='',
+                                        detalle=' | '.join([detalle for detalle in detalles_producto if detalle != '-']) or '-',
                                         respuesta_sunat_descripcion='',
                                         respuesta_sunat_codigo='',
                                         api_id=0)
+    _guardar_resumen_detalle_venta(venta_creada.idventa, detalles_producto)
 
     # new_list= zip(productos,unidades,cantidades,precio_unitarios,sub_totales)
 
-    for nombre, cantidad_subtotal, sub_total in zip(productos, cantidades, sub_totales):
+    for nombre, detalle_producto, cantidad_subtotal, sub_total in zip(productos, detalles_producto, cantidades, sub_totales):
 
         obtener_producto = _buscar_producto_por_nombre_o_barra(nombre)
         stockActual = obtener_producto.stockactual
@@ -663,8 +758,14 @@ def guardarVenta(request):
         obtener_producto.save()
 
         # precio_subtotal= cantidad_subtotal*precio_unitario #Tal vez
-        VentaDetalle.objects.create(idventa=venta_creada, idproducto=obtener_producto,
-                                    cantidad=cantidad_subtotal, preciosubtotal=sub_total)
+        venta_detalle = VentaDetalle.objects.create(
+            idventa=venta_creada,
+            idproducto=obtener_producto,
+            detalle=detalle_producto,
+            cantidad=cantidad_subtotal,
+            preciosubtotal=sub_total,
+        )
+        _guardar_detalle_linea(venta_detalle.idventadetalle, detalle_producto)
 
     # Para transaccion
     ultimo_registro = Caja.objects.order_by('-id_caja').first()
@@ -738,6 +839,7 @@ def editarVenta(request, id):
         ventas_fechaemision = ventas.fechaemision.strftime('%Y-%m-%d')
 
         ventas_detalles = VentaDetalle.objects.filter(idventa=id)
+        detalle_map = _obtener_detalle_map(id)
 
         # Registro de la empresa
         empresa = Empresa.objects.filter(idempresa=1).first()
@@ -752,6 +854,7 @@ def editarVenta(request, id):
                 detalle.cantidad).replace(',', '.')
             detalle.preciosubtotal_formateado = str(
                 detalle.preciosubtotal).replace(',', '.')
+            detalle.detalle_texto = detalle_map.get(detalle.idventadetalle, '-')
 
         ventas.total_gravada_formateado = str(
             ventas.total_gravada).replace(',', '.')
@@ -765,6 +868,7 @@ def editarVenta(request, id):
             'ventas': ventas,
             'ventas_detalles': ventas_detalles,
             'ventas_fechaemision': ventas_fechaemision,
+            'unidades': Unidades.objects.all(),
             "permisos": permisos,
             # "rows":rows
         }
@@ -786,6 +890,7 @@ def guardarEditar(request):
     idCliente = request.POST.get('idcliente')
 
     nombres = request.POST.getlist('producto[nombre][]')
+    detalles_producto = [_normalizar_detalle_producto(detalle) for detalle in request.POST.getlist('producto[detalle][]')]
     cantidades = request.POST.getlist('producto[cantidad][]')
     precio_unitarios = request.POST.getlist('producto[precioUnitario][]')
     sub_totales = request.POST.getlist('producto[subTotal][]')
@@ -795,7 +900,7 @@ def guardarEditar(request):
 
     venta = Venta.objects.get(idventa=id_venta)
 
-    new_zip = zip(nombres, cantidades, precio_unitarios,
+    new_zip = zip(nombres, detalles_producto, cantidades, precio_unitarios,
                   sub_totales, idproductos)
     productos_sin_stock = []
     for nombre, cantidad in zip(nombres, cantidades):
@@ -815,7 +920,7 @@ def guardarEditar(request):
         return JsonResponse({"mensaje": mensaje})
 
     # Si ya existía el registro, edita, si no resta el stock del producto nuevo y agrega un nuevo registro de venta detalle
-    for nombre, cantidad, precio_unitario, subtotal, id_producto in new_zip:
+    for nombre, detalle_producto, cantidad, precio_unitario, subtotal, id_producto in new_zip:
         # Reemplaza las comas por puntos en el subtotal
         subtotal = subtotal.replace(',', '.')
 
@@ -836,9 +941,11 @@ def guardarEditar(request):
                 obtener_producto.save()
 
                 # Actualizo datos en el detalle
+                venta_detalle.detalle = detalle_producto
                 venta_detalle.cantidad = cantidad_decimal
                 venta_detalle.preciosubtotal = subtotal_decimal
                 venta_detalle.save()
+                _guardar_detalle_linea(venta_detalle.idventadetalle, detalle_producto)
         # else:
         else:
             print("Entro a crear")
@@ -856,8 +963,14 @@ def guardarEditar(request):
 
             if not venta_detalle_existente:
                 # Crea un nuevo registro solo si no existe un registro para este producto en la venta actual
-                VentaDetalle.objects.create(
-                    idventa=venta, idproducto=producto, cantidad=cantidad_decimal, preciosubtotal=subtotal_decimal)
+                venta_detalle_nuevo = VentaDetalle.objects.create(
+                    idventa=venta,
+                    idproducto=producto,
+                    detalle=detalle_producto,
+                    cantidad=cantidad_decimal,
+                    preciosubtotal=subtotal_decimal,
+                )
+                _guardar_detalle_linea(venta_detalle_nuevo.idventadetalle, detalle_producto)
 
     # Cliente
     getCliente = Clientes.objects.get(idcliente=idCliente)
@@ -870,7 +983,11 @@ def guardarEditar(request):
     venta.total_igv = totalIgv
     venta.total_exonerada = totalExonerada
     venta.total_a_pagar = ventaTotal
+    venta.detalle = ' | '.join([detalle for detalle in detalles_producto if detalle != '-']) or '-'
     venta.save()
+    _guardar_resumen_detalle_venta(venta.idventa, detalles_producto)
+    venta.ruta_ticket = generar_ticket_pdf_venta(venta)
+    venta.save(update_fields=['ruta_ticket'])
 
     return JsonResponse({"mensaje": "Venta exitosa"})
 
@@ -895,6 +1012,31 @@ def buscarFechaVentas(request):
 
     resultado_json = list(rows)
     return JsonResponse(resultado_json, safe=False)
+
+
+def detalleVenta(request, id):
+    venta = Venta.objects.select_related('idcliente', 'idnumserie').get(idventa=id)
+    items = _obtener_items_venta(id)
+
+    return JsonResponse({
+        'venta': {
+            'idventa': venta.idventa,
+            'cliente': venta.idcliente.razonsocial,
+            'documento': f'{venta.idnumserie.numserie}-{venta.numcorrelativo}',
+            'fecha': venta.fechaemision.strftime('%d/%m/%Y'),
+            'total': f'{_to_decimal(venta.total_a_pagar):.2f}',
+        },
+        'items': [
+            {
+                'producto': item['producto'],
+                'detalle': item['detalle'],
+                'precio_venta': f"{item['precio_venta']:.2f}",
+                'cantidad': f"{item['cantidad']}",
+                'subtotal': f"{item['subtotal']:.2f}",
+            }
+            for item in items
+        ]
+    })
 
 
 def export_to_excel_ventas(request):

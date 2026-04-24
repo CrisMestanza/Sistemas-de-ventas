@@ -141,6 +141,7 @@
                                         <th>Nombre</th>
 
                                         <th scope="col">Unid. Medida </th>
+                                        <th scope="col">Detalle</th>
                                         <th scope="col">Stock actual</th>
                                         <th scope="col">Cantidad a vender</th>
 
@@ -179,6 +180,13 @@
                                                     {% endfor %}
 
                                                 </select>
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <div class="input-group">
+                                                <input class="form-control" type="text" name="producto[detalle][]"
+                                                    placeholder="Opcional">
                                             </div>
                                         </td>
 
@@ -427,11 +435,12 @@
             nuevaFila += '<td><div class="input-group"><input class="form-control busqueda" type="list" aria-label="With textarea" name="producto[nombre][]"><datalist></datalist></div></td>';
 
             nuevaFila += '<td><div class="input-group"><select name="producto[unidad][]" id="unidad" class="form-control" aria-label="With textarea">'
-            nuevaFila += '<td><div class="input-group"><input class="form-control" type="number" readonly    id="stockActual"aria-label="With textarea"></div></td>'
             {% for unidad in unidades %}
             nuevaFila += '<option value="{{unidad.idunidad}}"> {{unidad.abrunidad}} </option>'
             {% endfor %}
             nuevaFila += '</select></div></td>';
+            nuevaFila += '<td><div class="input-group"><input class="form-control" type="text" name="producto[detalle][]" placeholder="Opcional"></div></td>';
+            nuevaFila += '<td><div class="input-group"><input class="form-control" type="number" readonly    id="stockActual"aria-label="With textarea"></div></td>'
             nuevaFila += '<td><div class="input-group"><input class="form-control" id="cantidad" name="producto[cantidad][]" aria-label="With textarea"></div></td>';
             //   nuevaFila += '<td><div class="input-group"><select name="producto[tipoIgv][]" id="" class="form-control" aria-label="With textarea"></select></div></td>';
             nuevaFila += '<td><div class="input-group"><input class="form-control" id="precioUnitario" name="producto[precioUnitario][]"  aria-label="With textarea"></div></td>';

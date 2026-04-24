@@ -47,6 +47,7 @@
                         <th scope="col">Total</th>
                         <th scope="col">Fecha</th>
                         <th scope="col">Doc</th>
+                        <th scope="col">Productos</th>
                         <th scope="col">Ticket</th>
                         <th scope="col">XML</th>
                         <th scope="col">CDR</th>
@@ -68,6 +69,12 @@
                             <td>{{ resultado.2|floatformat:2 }}</td><!-- Accediendo al tercer elemento de la tupla para total -->
                             <td>{{ resultado.3}}</td> <!-- Accediendo al cuarto elemento de la tupla para fechaemision -->
                             <td>{{ resultado.4 }}-{{ resultado.5 }}</td>
+                            <td>
+                              <button type="button" class="btn btn-primary btn-sm ver-detalle-venta"
+                                data-id="{{ resultado.0 }}" data-bs-toggle="modal" data-bs-target="#detalleVentaModal">
+                                Ver productos
+                              </button>
+                            </td>
 
                             <!-- Ticket -->
                             <td>
@@ -137,7 +144,53 @@
             </table>
 
 
-            
+            <div class="modal fade" id="detalleVentaModal" tabindex="-1" aria-labelledby="detalleVentaModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="detalleVentaModalLabel">Detalle de la venta</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <strong>Cliente:</strong> <span id="detalleVentaCliente">-</span>
+                      </div>
+                      <div class="col-md-3">
+                        <strong>Doc:</strong> <span id="detalleVentaDoc">-</span>
+                      </div>
+                      <div class="col-md-3">
+                        <strong>Fecha:</strong> <span id="detalleVentaFecha">-</span>
+                      </div>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Producto</th>
+                            <th>Detalle</th>
+                            <th>Precio venta</th>
+                            <th>Cantidad</th>
+                            <th>Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody id="detalleVentaBody">
+                          <tr>
+                            <td colspan="5" class="text-center">Seleccione una venta</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
         </div>
     </div>
     
@@ -183,6 +236,55 @@ function confirmarEliminar(idCompra, enlace) {
     return false; // Detiene la acción predeterminada del enlace
 }
 
+function construirBotonDetalle(idVenta) {
+    return $('<button>')
+      .attr('type', 'button')
+      .addClass('btn btn-info btn-sm ver-detalle-venta')
+      .attr('data-id', idVenta)
+      .attr('data-bs-toggle', 'modal')
+      .attr('data-bs-target', '#detalleVentaModal')
+      .text('Ver productos');
+}
+
+$(document).on('click', '.ver-detalle-venta', function () {
+    const idVenta = $(this).data('id');
+
+    $('#detalleVentaCliente').text('-');
+    $('#detalleVentaDoc').text('-');
+    $('#detalleVentaFecha').text('-');
+    $('#detalleVentaBody').html('<tr><td colspan="5" class="text-center">Cargando...</td></tr>');
+
+    $.ajax({
+        type: 'GET',
+        url: '/ventas/detalle/' + idVenta,
+        success: function (response) {
+            $('#detalleVentaCliente').text(response.venta.cliente);
+            $('#detalleVentaDoc').text(response.venta.documento);
+            $('#detalleVentaFecha').text(response.venta.fecha);
+
+            let filas = '';
+            $.each(response.items, function (index, item) {
+                filas += '<tr>';
+                filas += '<td>' + item.producto + '</td>';
+                filas += '<td>' + item.detalle + '</td>';
+                filas += '<td>S/ ' + item.precio_venta + '</td>';
+                filas += '<td>' + item.cantidad + '</td>';
+                filas += '<td>S/ ' + item.subtotal + '</td>';
+                filas += '</tr>';
+            });
+
+            if (!filas) {
+                filas = '<tr><td colspan="5" class="text-center">No hay productos en esta venta</td></tr>';
+            }
+
+            $('#detalleVentaBody').html(filas);
+        },
+        error: function () {
+            $('#detalleVentaBody').html('<tr><td colspan="5" class="text-center">No se pudo cargar el detalle</td></tr>');
+        }
+    });
+});
+
 //Para filtrado de ventas
 $(function() {
   $('#filtrar').click(function(){
@@ -204,9 +306,11 @@ $(function() {
                   row.append($('<td>').text(resultado[2])); // Accediendo al tercer elemento de la tupla para total
                   row.append($('<td>').text(resultado[3])); // Accediendo al cuarto elemento de la tupla para fechaemision
                   row.append($('<td>').text(resultado[4] + '-' + resultado[5])); // Accediendo al quinto y sexto elemento de la tupla
-                  row.append($('<td>').text("A4"));
-                  row.append($('<td>').text("Ticket"));
-                  
+                  row.append($('<td>').append(construirBotonDetalle(resultado[0])));
+                  row.append($('<td>').text("Ver ticket"));
+                  row.append($('<td>').text("Falta envíar"));
+                  row.append($('<td>').text("Falta envíar"));
+                   
 
                   // Crea el botón de editar
                   var editButton = $('<a>').addClass('btn');
