@@ -18,7 +18,9 @@ services:
       retries: 10
 
   api:
-    build: ../Api-de-facturacion-electronica-sunat-Peru
+    build:
+      context: ../Api-de-facturacion-electronica-sunat-Peru
+      dockerfile: ../Sistemas-de-ventas/docker-api/Dockerfile
     restart: always
     ports:
       - "8001:8001"
