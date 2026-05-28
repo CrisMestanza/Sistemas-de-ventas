@@ -1,4 +1,5 @@
 from django.shortcuts import redirect, render
+from django.conf import settings
 from software.models.empresaModel import Empresa
 from software.models.departamentosModel import Departamentos
 from software.models.ProvinciasModel import Provincias
@@ -79,8 +80,8 @@ def editarEmpresa(request):
     empresa.iddistrito = getDistrito
     empresa.save()
 
-    url = "http://127.0.0.1:8001/api/v1/companies"
-    urlSucursal = "http://127.0.0.1:8001/api/v1/branches"
+    url = f"{settings.API_URL}/api/v1/companies"
+    urlSucursal = f"{settings.API_URL}/api/v1/branches"
 
     print("Token en sesión antes de la solicitud API:", request.session.get(
         'api_token'))  # Debug: Verificar token antes de la solicitud
@@ -172,7 +173,7 @@ def agregarpem(request):
         empresa.save()
 
         # 🔥 API DESTINO
-        url = "http://127.0.0.1:8001/api/v1/companies/1"
+        url = f"{settings.API_URL}/api/v1/companies/1"
 
         headers = {
             "Accept": "application/json",
@@ -225,7 +226,7 @@ def produccion(request, id):
     empresa.mododev = 1
     empresa.save()
 
-    url = f"http://127.0.0.1:8001/api/v1/companies/{id}/activate"
+    url = f"{settings.API_URL}/api/v1/companies/{id}/activate"
     headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {request.session.get('api_token')}"

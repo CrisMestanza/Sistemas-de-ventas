@@ -138,5 +138,7 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configuración de la ruta media
-MEDIA_URL = '/media/'  # URL que se usará para acceder a los archivos media
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Ruta en el sistema de archivos
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+API_URL = os.environ.get('API_URL', 'http://127.0.0.1:8001')

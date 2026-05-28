@@ -1,4 +1,5 @@
 from django.shortcuts import redirect, render
+from django.conf import settings
 import templates
 import requests
 from software.models.UsuarioModel import Usuario
@@ -31,7 +32,7 @@ def login(request):
             # =========================
             # LLAMADA A API EXTERNA
             # =========================
-            url = "http://127.0.0.1:8001/api/auth/login"
+            url = f"{settings.API_URL}/api/auth/login"
 
             headers = {
                 "Accept": "application/json",

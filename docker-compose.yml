@@ -9,12 +9,28 @@ services:
       MYSQL_DATABASE: facsiswave
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./facsiswave.sql:/docker-entrypoint-initdb.d/facsiswave.sql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
+      - ./facsiswave.sql:/docker-entrypoint-initdb.d/02-facsiswave.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p72655883cristian"]
       interval: 10s
       timeout: 5s
       retries: 10
+
+  api:
+    build: ../Api-de-facturacion-electronica-sunat-Peru
+    restart: always
+    ports:
+      - "8001:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_DATABASE: apigo
+      DB_USERNAME: root
+      DB_PASSWORD: 72655883cristian
+      DB_PORT: "3306"
 
   web:
     build: .
@@ -24,12 +40,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      api:
+        condition: service_started
     environment:
       DB_HOST: db
       DB_NAME: facsiswave
       DB_USER: root
       DB_PASSWORD: 72655883cristian
       DB_PORT: "3306"
+      API_URL: "http://api:8001"
       DJANGO_ALLOWED_HOSTS: "localhost 127.0.0.1 51.222.13.41"
       DEBUG: "False"
     volumes:
