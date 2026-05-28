@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 72655883cristian
+      MYSQL_DATABASE: facsiswave
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./facsiswave.sql:/docker-entrypoint-initdb.d/facsiswave.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p72655883cristian"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    restart: always
+    ports:
+      - "8007:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: facsiswave
+      DB_USER: root
+      DB_PASSWORD: 72655883cristian
+      DB_PORT: "3306"
+      DJANGO_ALLOWED_HOSTS: "localhost 127.0.0.1 51.222.13.41"
+      DEBUG: "False"
+    volumes:
+      - ./media:/app/media
+      - static_volume:/var/www/static
+
+volumes:
+  mysql_data:
+  static_volume:
