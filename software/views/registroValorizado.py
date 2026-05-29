@@ -69,7 +69,8 @@ def _get_registros_val(fecha_inicio, fecha_fin, operacion):
                 'sal_cant': None, 'sal_unit': None, 'sal_total': None,
             })
 
-    return sorted(ventas + compras, key=lambda x: x['fecha'])
+    # Compras (0) antes que Ventas (1) en el mismo día
+    return sorted(ventas + compras, key=lambda x: (x['fecha'], 0 if x['operacion'] == 'Compra' else 1))
 
 
 def _fmt(cant, unit, total):

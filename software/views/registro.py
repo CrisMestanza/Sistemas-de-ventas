@@ -60,7 +60,8 @@ def _get_registros(fecha_inicio, fecha_fin, operacion):
                 'salida': Decimal('0'),
             })
 
-    registros = sorted(ventas + compras, key=lambda x: x['fecha'])
+    # Compras (0) antes que Ventas (1) en el mismo día para el saldo acumulado
+    registros = sorted(ventas + compras, key=lambda x: (x['fecha'], 0 if x['operacion'] == 'Compra' else 1))
 
     saldo = Decimal('0')
     for r in registros:
