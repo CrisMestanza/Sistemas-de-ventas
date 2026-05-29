@@ -16,6 +16,7 @@ from .views import cerrarcaja
 from .views import registroCaja
 from .views import transaccion
 from .views import proveedores
+from .views import registro
 
 urlpatterns = [
     #login
@@ -124,6 +125,11 @@ urlpatterns = [
     #REGISTROS DE CAJA
     path('cajas', registroCaja.mostrar_caja, name="MostrarCajas"),
     
+    # Registro
+    path('registro', registro.registro, name='registro'),
+    path('registro/excel', registro.export_registro_excel, name='registro_export_excel'),
+    path('registro/pdf', registro.export_registro_pdf, name='registro_export_pdf'),
+
     #TRANSACCIONES
     path('transacciones', transaccion.mostrar_Transaccion, name="MostrarTransaccion"),
     path('transacciones/agregar', transaccion.agregar_Transaccion, name="transaccionAgregar"),
