@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from django.db.models import Sum, Value, DecimalField, F, ExpressionWrapper
+from django.db.models import Sum, Value, DecimalField
 from django.db.models.functions import Coalesce
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -49,8 +49,8 @@ def _get_registros_val(fecha_inicio, fecha_fin, operacion):
 
     if operacion in ('todos', 'compras'):
         qs = Compras.objects.filter(estado=1).annotate(
-            total_cant=Coalesce(Sum('compradetalle__cantidad'), Value(0), output_field=DecimalField()),
-            total_monto=Coalesce(Sum('compradetalle__subtotal'), Value(0), output_field=DecimalField()),
+            total_cant=Sum('compradetalle__cantidad'),
+            total_monto=Sum('compradetalle__subtotal'),
         )
         if fecha_inicio:
             qs = qs.filter(fechacompra__gte=fecha_inicio)

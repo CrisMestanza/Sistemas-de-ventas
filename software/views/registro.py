@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from django.db.models import Sum, Value, DecimalField
+from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from decimal import Decimal
 from datetime import date
@@ -44,7 +44,7 @@ def _get_registros(fecha_inicio, fecha_fin, operacion):
 
     if operacion in ('todos', 'compras'):
         qs = Compras.objects.filter(estado=1).annotate(
-            total=Coalesce(Sum('compradetalle__subtotal'), Value(0), output_field=DecimalField())
+            total=Sum('compradetalle__subtotal')
         )
         if fecha_inicio:
             qs = qs.filter(fechacompra__gte=fecha_inicio)
@@ -56,7 +56,7 @@ def _get_registros(fecha_inicio, fecha_fin, operacion):
                 'tipo_doc': 'Comprobante de compra',
                 'serie_numero': c.numcorrelativo,
                 'operacion': 'Compra',
-                'entrada': Decimal(str(c.total)),
+                'entrada': Decimal(str(c.total or 0)),
                 'salida': Decimal('0'),
             })
 
