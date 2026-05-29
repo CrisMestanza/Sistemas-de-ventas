@@ -105,7 +105,14 @@
           </a>
       </li><!-- End Dashboard Nav -->
       {% endfor %}
-      
+
+      <li class="nav-item">
+        <a class="nav-link {% if request.path == '/registro' %}active{% endif %}" href="/registro">
+          <i class="bi bi-journal-text"></i>
+          <span>Registro</span>
+        </a>
+      </li>
+
     </ul>
 
   </aside><!-- End Sidebar-->
