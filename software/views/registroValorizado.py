@@ -182,9 +182,9 @@ def export_valorizado_excel(request):
             float(r['saldo_cant']), float(r['saldo_unit']), float(r['saldo_total']),
         ])
         row = ws[ws.max_row]
-        fill = g_fill if r['operacion'] == 'Compra' else r_fill
-        for c in range(5, 11): row[c].fill = fill
-        for c in range(11, 14): row[c].fill = b_fill
+        for c in range(4, 7):   row[c].fill = g_fill  # Entrada  (cols E-G, idx 4-6)
+        for c in range(7, 10):  row[c].fill = r_fill  # Salida   (cols H-J, idx 7-9)
+        for c in range(10, 13): row[c].fill = b_fill  # Saldo    (cols K-M, idx 10-12)
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
