@@ -132,23 +132,25 @@ def guardar(request):
         productos = request.POST.getlist('producto[nombre][]')
         identificadores = request.POST.getlist('producto[identificador][]')
         fecha_produccion = request.POST.getlist('producto[fecha_produccion][]')
-        fecha_vencimiento = request.POST.getlist(
-            'producto[fecha_vencimiento][]')
+        fecha_vencimiento = request.POST.getlist('producto[fecha_vencimiento][]')
         stocks = request.POST.getlist('producto[stock][]')
+        precios = request.POST.getlist('producto[precio][]')
 
-        for nombre, identificadorPrimario, produccion, vencimiento, stock in zip(productos, identificadores, fecha_produccion, fecha_vencimiento, stocks):
-            # Obtengo el producto
-            producto_existente = Producto.objects.filter(
-                nomproducto=nombre).first()
+        for nombre, identificadorPrimario, produccion, vencimiento, stock, precio in zip(productos, identificadores, fecha_produccion, fecha_vencimiento, stocks, precios):
+            producto_existente = Producto.objects.filter(nomproducto=nombre).first()
 
             if producto_existente:
-                # Agregar stock
                 nuevo_stock = producto_existente.stockactual + float(stock)
                 producto_existente.stockactual = nuevo_stock
                 producto_existente.save()
 
-                compraDetalleId = CompraDetalle.objects.create(idcompra_id=id_insertado, idproducto=producto_existente, cantidad=float(
-                    stock), subtotal=producto_existente.preciounitario * float(stock))
+                precio_compra = float(precio) if precio else producto_existente.preciounitario
+                compraDetalleId = CompraDetalle.objects.create(
+                    idcompra_id=id_insertado,
+                    idproducto=producto_existente,
+                    cantidad=float(stock),
+                    subtotal=precio_compra * float(stock)
+                )
 
                 # Agregar datos del lote
                 Lotes.objects.create(

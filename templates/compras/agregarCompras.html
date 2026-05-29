@@ -65,7 +65,9 @@
                                 <th scope="col">Identificador de lote </th>
                                 <th scope="col">Fecha producción</th>
                                 <th scope="col">Fecha vencimiento</th>
-                                <th scope="col">Stock</th>
+                                <th scope="col">Cantidad</th>
+                                <th scope="col">Precio unit. (S/)</th>
+                                <th scope="col">Subtotal (S/)</th>
                                 <th scope="col">Acción</th>
                               </tr>
                           </thead>
@@ -107,11 +109,22 @@
                               </td>
                               <td>
                                 <div class="input-group">
-          
-                                  <input type="number" class="form-control" name="producto[stock][]" aria-label="With textarea">
+                                  <input type="number" step="0.01" class="form-control cantidad-input" name="producto[stock][]" aria-label="With textarea" min="0">
                                 </div>
                               </td>
-          
+
+                              <td>
+                                <div class="input-group">
+                                  <input type="number" step="0.01" class="form-control precio-input" name="producto[precio][]" aria-label="Precio unitario" min="0" placeholder="0.00">
+                                </div>
+                              </td>
+
+                              <td>
+                                <div class="input-group">
+                                  <input type="number" step="0.01" class="form-control subtotal-input" name="producto[subtotal][]" aria-label="Subtotal" readonly placeholder="0.00" style="background:#f8f9fa;">
+                                </div>
+                              </td>
+
                               <td>
                                 <button type="button" id="" class="btn btn-danger">Eliminar</button>
                               </td>
@@ -227,8 +240,9 @@
       nuevaFila += '<td><div class="input-group"><input class="form-control" name="producto[identificador][]" aria-label="With textarea"></div></td>';
       nuevaFila += '<td><div class="input-group"><input class="form-control" type="date" name="producto[fecha_produccion][]" aria-label="With textarea"></div></td>';
       nuevaFila += '<td><div class="input-group"><input class="form-control" type="date" name="producto[fecha_vencimiento][]" aria-label="With textarea"></div></td>';
-      nuevaFila += '<td><div class="input-group"><input class="form-control" type="number" name="producto[stock][]" aria-label="With textarea"></div></td>';
-
+      nuevaFila += '<td><div class="input-group"><input class="form-control cantidad-input" type="number" step="0.01" name="producto[stock][]" min="0"></div></td>';
+      nuevaFila += '<td><div class="input-group"><input class="form-control precio-input" type="number" step="0.01" name="producto[precio][]" min="0" placeholder="0.00"></div></td>';
+      nuevaFila += '<td><div class="input-group"><input class="form-control subtotal-input" type="number" step="0.01" name="producto[subtotal][]" readonly placeholder="0.00" style="background:#f8f9fa;"></div></td>';
       nuevaFila += '<td><button type="button" id="btnEliminar" class="btn btn-danger eliminarProducto">Eliminar</button></td>';
       nuevaFila += '</tr>';
       button = '<button type="button"  class="btn btn-primary">Agregar Producto</button>'
@@ -251,25 +265,47 @@
         //Opciones productos de la busqueda
         let busqueda = () => {
           $(".busqueda").on('input', function(e) {
+              let fila = $(this).closest('tr');
               $.ajax({
                   type: "POST",
                   url: "{% url 'buscarCompras' %}",
                   dataType: 'json',
                   data: {
                       busqueda: $(this).val(),
-                      csrfmiddlewaretoken: '{{ csrf_token }}' // Incluir el token CSRF
+                      csrfmiddlewaretoken: '{{ csrf_token }}'
                   },
                   success: function(response) {
                       $('#opcionesBusqueda').empty();
-      
                       $.each(response, function(index, value) {
-                          precioUnitario = value.preciounitario;
-                          opciones = '<option value="' + value.nomproducto + '">' + value.nomproducto + '</option>';
-                          $('#opcionesBusqueda').append(opciones);
+                          let opcion = '<option value="' + value.nomproducto + '" data-precio="' + value.preciounitario + '">' + value.nomproducto + '</option>';
+                          $('#opcionesBusqueda').append(opcion);
                       });
                   }
               });
           });
+
+          // Autocompleta precio cuando selecciona un producto
+          $(".busqueda").on('change', function() {
+              let nombreSeleccionado = $(this).val();
+              let opcion = $('#opcionesBusqueda option[value="' + nombreSeleccionado + '"]');
+              let precio = opcion.data('precio');
+              if (precio !== undefined) {
+                  let fila = $(this).closest('tr');
+                  fila.find('.precio-input').val(parseFloat(precio).toFixed(2));
+                  calcularSubtotal(fila);
+              }
+          });
+
+          // Recalcula subtotal al cambiar cantidad o precio
+          $(document).on('input', '.cantidad-input, .precio-input', function() {
+              calcularSubtotal($(this).closest('tr'));
+          });
+        }
+
+        function calcularSubtotal(fila) {
+            let cant = parseFloat(fila.find('.cantidad-input').val()) || 0;
+            let precio = parseFloat(fila.find('.precio-input').val()) || 0;
+            fila.find('.subtotal-input').val((cant * precio).toFixed(2));
         }
       
   
