@@ -17,28 +17,28 @@ services:
       timeout: 5s
       retries: 10
 
-  api:
-    build:
-      context: ..
-      dockerfile: Sistemas-de-ventas/docker-api/Dockerfile
-    restart: always
-    ports:
-      - "8008:8001"
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DB_HOST: db
-      DB_DATABASE: apigo
-      DB_USERNAME: root
-      DB_PASSWORD: 72655883cristian
-      DB_PORT: "3306"
+  # api:
+  #   build:
+  #     context: ..
+  #     dockerfile: Sistemas-de-ventas/docker-api/Dockerfile
+  #   restart: always
+  #   ports:
+  #     - "8008:8001"
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   environment:
+  #     DB_HOST: db
+  #     DB_DATABASE: apigo
+  #     DB_USERNAME: root
+  #     DB_PASSWORD: 72655883cristian
+  #     DB_PORT: "3306"
 
   web:
     build: .
     restart: always
     ports:
-      - "8007:8000"
+      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -51,7 +51,7 @@ services:
       DB_PASSWORD: 72655883cristian
       DB_PORT: "3306"
       API_URL: "http://api:8001"
-      DJANGO_ALLOWED_HOSTS: "localhost 127.0.0.1 51.222.13.41"
+      DJANGO_ALLOWED_HOSTS: "*"
       DEBUG: "False"
     volumes:
       - ./media:/app/media
