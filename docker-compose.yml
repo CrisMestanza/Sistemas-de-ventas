@@ -21,16 +21,7 @@ services:
       dockerfile: Sistemas-de-ventas/docker-api/Dockerfile
     restart: always
     ports:
-      - "8008:8001"
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DB_HOST: db
-      DB_DATABASE: apigo
-      DB_USERNAME: root
-      DB_PASSWORD: 72655883cristian
-      DB_PORT: "3306"
+      - "8008:80"
 
   web:
     build: .
@@ -48,7 +39,7 @@ services:
       DB_USER: root
       DB_PASSWORD: 72655883cristian
       DB_PORT: "3306"
-      API_URL: "http://api:8001"
+      API_URL: "http://api:80"
       DJANGO_ALLOWED_HOSTS: "*"
       DEBUG: "False"
     volumes:
