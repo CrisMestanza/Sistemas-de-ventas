@@ -97,49 +97,110 @@
 
   <!-- ======= Sidebar ======= -->
   <aside id="sidebar" class="sidebar">
-
     <ul class="sidebar-nav" id="sidebar-nav">
-      {% for permiso in permisos %}
 
+      {% with p=request.path %}
+
+      <!-- ── VENTAS ── -->
       <li class="nav-item">
-          <a class="nav-link" href="{{ permiso.idmodulo.url }}">
-              <i class="{{ permiso.idmodulo.logo }}"></i>
-              <span>{{ permiso.idmodulo.nombremodulo }}</span>
-
-          </a>
-      </li><!-- End Dashboard Nav -->
-      {% endfor %}
-
-      <li class="nav-item">
-        <a class="nav-link {% if request.path == '/clientes' %}active{% endif %}" href="/clientes">
-          <i class="bi bi-people"></i>
-          <span>Clientes</span>
+        <a class="nav-link {% if p != '/ventas' and p != '/ventas/venta' and p != '/cotizaciones' and p != '/clientes' %}collapsed{% endif %}"
+           data-bs-target="#nav-ventas" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-cart3"></i><span>Ventas</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
+        <ul id="nav-ventas" class="nav-content collapse {% if p == '/ventas' or p == '/ventas/venta' or p == '/cotizaciones' or p == '/clientes' %}show{% endif %}"
+            data-bs-parent="#sidebar-nav">
+          <li><a href="/ventas/venta" class="{% if p == '/ventas/venta' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Nueva Venta</span></a></li>
+          <li><a href="/ventas" class="{% if p == '/ventas' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Listado Ventas</span></a></li>
+          <li><a href="/cotizaciones" class="{% if p == '/cotizaciones' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Cotizaciones</span></a></li>
+          <li><a href="/clientes" class="{% if p == '/clientes' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Clientes</span></a></li>
+        </ul>
       </li>
 
+      <!-- ── INVENTARIO ── -->
       <li class="nav-item">
-        <a class="nav-link {% if request.path == '/cotizaciones' %}active{% endif %}" href="/cotizaciones">
-          <i class="bi bi-file-earmark-text"></i>
-          <span>Cotizaciones</span>
+        <a class="nav-link {% if p != '/productos' and p != '/categorias' and p != '/unidades' and p != '/compras' and p != '/proveedores' %}collapsed{% endif %}"
+           data-bs-target="#nav-inventario" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-boxes"></i><span>Inventario</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
+        <ul id="nav-inventario" class="nav-content collapse {% if p == '/productos' or p == '/categorias' or p == '/unidades' or p == '/compras' or p == '/proveedores' %}show{% endif %}"
+            data-bs-parent="#sidebar-nav">
+          <li><a href="/productos" class="{% if p == '/productos' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Productos</span></a></li>
+          <li><a href="/categorias" class="{% if p == '/categorias' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Categorías</span></a></li>
+          <li><a href="/unidades" class="{% if p == '/unidades' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Unidades</span></a></li>
+          <li><a href="/compras" class="{% if p == '/compras' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Compras</span></a></li>
+          <li><a href="/proveedores" class="{% if p == '/proveedores' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Proveedores</span></a></li>
+        </ul>
       </li>
 
+      <!-- ── CAJA ── -->
       <li class="nav-item">
-        <a class="nav-link {% if request.path == '/registro' %}active{% endif %}" href="/registro">
-          <i class="bi bi-journal-text"></i>
-          <span>Registro</span>
+        <a class="nav-link {% if p != '/caja' and p != '/cerrarcaja' and p != '/cajas' %}collapsed{% endif %}"
+           data-bs-target="#nav-caja" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-cash-stack"></i><span>Caja</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
+        <ul id="nav-caja" class="nav-content collapse {% if p == '/caja' or p == '/cerrarcaja' or p == '/cajas' %}show{% endif %}"
+            data-bs-parent="#sidebar-nav">
+          <li><a href="/caja" class="{% if p == '/caja' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Apertura de Caja</span></a></li>
+          <li><a href="/cerrarcaja" class="{% if p == '/cerrarcaja' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Cerrar Caja</span></a></li>
+          <li><a href="/cajas" class="{% if p == '/cajas' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Historial de Cajas</span></a></li>
+        </ul>
       </li>
 
+      <!-- ── REPORTES ── -->
       <li class="nav-item">
-        <a class="nav-link {% if request.path == '/registro-valorizado' %}active{% endif %}" href="/registro-valorizado">
-          <i class="bi bi-journal-richtext"></i>
-          <span>Registro Valorizado</span>
+        <a class="nav-link {% if p != '/registro' and p != '/registro-valorizado' and p != '/transacciones' %}collapsed{% endif %}"
+           data-bs-target="#nav-reportes" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-bar-chart-line"></i><span>Reportes</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
+        <ul id="nav-reportes" class="nav-content collapse {% if p == '/registro' or p == '/registro-valorizado' or p == '/transacciones' %}show{% endif %}"
+            data-bs-parent="#sidebar-nav">
+          <li><a href="/registro" class="{% if p == '/registro' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Registro</span></a></li>
+          <li><a href="/registro-valorizado" class="{% if p == '/registro-valorizado' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Registro Valorizado</span></a></li>
+          <li><a href="/transacciones" class="{% if p == '/transacciones' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Transacciones</span></a></li>
+        </ul>
       </li>
+
+      <!-- ── ADMINISTRACIÓN ── -->
+      <li class="nav-item">
+        <a class="nav-link {% if p != '/configuracion' and p != '/usuarios' and p != '/tipousuarios' and p != '/numeroserie' and p != '/permisos' and p != '/cpanel' %}collapsed{% endif %}"
+           data-bs-target="#nav-admin" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-gear"></i><span>Administración</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="nav-admin" class="nav-content collapse {% if p == '/configuracion' or p == '/usuarios' or p == '/tipousuarios' or p == '/numeroserie' or p == '/permisos' or p == '/cpanel' %}show{% endif %}"
+            data-bs-parent="#sidebar-nav">
+          <li><a href="/configuracion" class="{% if p == '/configuracion' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Configuración</span></a></li>
+          <li><a href="/usuarios" class="{% if p == '/usuarios' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Usuarios</span></a></li>
+          <li><a href="/tipousuarios" class="{% if p == '/tipousuarios' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Tipo Usuarios</span></a></li>
+          <li><a href="/numeroserie" class="{% if p == '/numeroserie' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>N° Serie</span></a></li>
+          <li><a href="/permisos" class="{% if p == '/permisos' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Permisos</span></a></li>
+          <li><a href="/cpanel" class="{% if p == '/cpanel' %}active{% endif %}">
+            <i class="bi bi-circle"></i><span>Panel de Control</span></a></li>
+        </ul>
+      </li>
+
+      {% endwith %}
 
     </ul>
-
   </aside><!-- End Sidebar-->
 
 
