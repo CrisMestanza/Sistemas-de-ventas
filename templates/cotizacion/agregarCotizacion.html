@@ -17,55 +17,75 @@
       <div class="col-lg-12">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Datos de la Cotización</h5>
+            <h5 class="card-title">Datos del Cliente</h5>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">DNI / RUC</label>
+                <div class="input-group">
+                  <input type="text" id="doccliente" class="form-control" maxlength="11" placeholder="Ingrese DNI o RUC">
+                  <button class="btn btn-primary" type="button" id="btnBuscarCliente">
+                    <i class="bi bi-search"></i> Buscar
+                  </button>
+                </div>
+                <div id="msgCliente" class="form-text"></div>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label fw-semibold">Nombre / Razón Social</label>
+                <input type="text" id="nomcliente" class="form-control" readonly placeholder="Se autocompleta al buscar">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Dirección</label>
+                <input type="text" id="dircliente" class="form-control" readonly placeholder="—">
+              </div>
+              <input type="hidden" id="idcliente" name="idcliente">
+            </div>
+
+            <h5 class="card-title">Ítems de la Cotización</h5>
             <form id="formCotizacion">
               {% csrf_token %}
-              <div class="row mb-3">
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Cliente <span class="text-danger">*</span></label>
-                  <select name="idcliente" id="idcliente" class="form-select" required>
-                    <option value="">-- Seleccionar cliente --</option>
-                    {% for cliente in clientes %}
-                    <option value="{{ cliente.idcliente }}">{{ cliente.razonsocial }} — {{ cliente.numdoc }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Observaciones</label>
-                  <input type="text" name="observaciones" class="form-control" placeholder="Opcional...">
-                </div>
-              </div>
+              <input type="hidden" name="idcliente" id="idclienteForm">
+              <input type="hidden" name="observaciones" id="obsForm">
 
-              <!-- Tabla de ítems -->
               <div class="table-responsive mb-3">
                 <table class="table table-bordered align-middle" id="tablaItems">
                   <thead class="table-dark">
                     <tr>
-                      <th style="width:5%">#</th>
-                      <th style="width:22%">Producto</th>
-                      <th style="width:25%">Descripción</th>
-                      <th style="width:10%">Cantidad</th>
+                      <th style="width:4%">#</th>
+                      <th style="width:24%">Producto</th>
+                      <th style="width:26%">Descripción</th>
+                      <th style="width:9%">Cant.</th>
                       <th style="width:13%">P. Unitario</th>
                       <th style="width:13%">Subtotal</th>
-                      <th style="width:7%"></th>
+                      <th style="width:6%"></th>
                     </tr>
                   </thead>
                   <tbody id="cuerpoItems">
-                    <tr id="fila-1">
+                    <tr>
                       <td class="text-center num-fila">1</td>
-                      <td><input type="text" name="producto[]" class="form-control form-control-sm" placeholder="Producto" required></td>
+                      <td>
+                        <input type="text" name="producto[]" class="form-control form-control-sm busqueda-prod" list="dl-0" placeholder="Buscar producto..." autocomplete="off" required>
+                        <datalist id="dl-0"></datalist>
+                      </td>
                       <td><input type="text" name="descripcion[]" class="form-control form-control-sm" placeholder="Descripción"></td>
-                      <td><input type="number" name="cantidad[]" class="form-control form-control-sm campo-calc" min="0.01" step="0.01" value="1" required></td>
-                      <td><input type="number" name="preciounitario[]" class="form-control form-control-sm campo-calc" min="0" step="0.01" value="0.00" required></td>
+                      <td><input type="number" name="cantidad[]" class="form-control form-control-sm campo-cant" min="0.01" step="0.01" value="1" required></td>
+                      <td><input type="number" name="preciounitario[]" class="form-control form-control-sm campo-precio" min="0" step="0.01" value="0.00" required></td>
                       <td><input type="number" name="subtotal[]" class="form-control form-control-sm subtotal-field" readonly value="0.00"></td>
                       <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-danger btn-quitar" onclick="quitarFila(this)">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="quitarFila(this)">
                           <i class="bi bi-dash-circle"></i>
                         </button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <div class="row align-items-center mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Observaciones</label>
+                  <input type="text" id="observaciones" class="form-control" placeholder="Opcional...">
+                </div>
               </div>
 
               <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -80,6 +100,7 @@
                 </div>
               </div>
             </form>
+
           </div>
         </div>
       </div>
@@ -88,72 +109,188 @@
 </main>
 
 <script>
-  let numFilas = 1;
+  const CSRF = '{{ csrf_token }}';
+  let dlCounter = 0;
 
+  // ── Búsqueda de cliente por DNI/RUC ────────────────────────────────────────
+  document.getElementById('btnBuscarCliente').addEventListener('click', function () {
+    const doc = document.getElementById('doccliente').value.trim();
+    const msg = document.getElementById('msgCliente');
+    msg.textContent = 'Buscando...';
+    msg.className = 'form-text text-muted';
+
+    fetch("{% url 'cotizacionBuscarCliente' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `doc=${encodeURIComponent(doc)}&csrfmiddlewaretoken=${CSRF}`
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.error) {
+        msg.textContent = res.error;
+        msg.className = 'form-text text-danger';
+        return;
+      }
+      document.getElementById('nomcliente').value = res.nombre;
+      document.getElementById('dircliente').value = res.direccion || '';
+      document.getElementById('idcliente').value = res.idcliente;
+      document.getElementById('idclienteForm').value = res.idcliente;
+
+      if (res.created) {
+        msg.textContent = '✓ Cliente creado y guardado en el sistema.';
+        msg.className = 'form-text text-success';
+      } else {
+        msg.textContent = '✓ Cliente encontrado.';
+        msg.className = 'form-text text-success';
+      }
+    })
+    .catch(() => {
+      msg.textContent = 'Error al consultar.';
+      msg.className = 'form-text text-danger';
+    });
+  });
+
+  document.getElementById('doccliente').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnBuscarCliente').click(); }
+  });
+
+  // ── Búsqueda de productos (autocomplete) ────────────────────────────────────
+  let searchTimer = null;
+
+  document.getElementById('cuerpoItems').addEventListener('input', function (e) {
+    const el = e.target;
+
+    if (el.classList.contains('busqueda-prod')) {
+      clearTimeout(searchTimer);
+      const fila = el.closest('tr');
+      const datalist = fila.querySelector('datalist');
+      const busqueda = el.value.trim();
+
+      if (!busqueda) return;
+
+      searchTimer = setTimeout(() => {
+        fetch("{% url 'buscarProducto' %}", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `busqueda=${encodeURIComponent(busqueda)}&csrfmiddlewaretoken=${CSRF}`
+        })
+        .then(r => r.json())
+        .then(res => {
+          datalist.innerHTML = '';
+          res.productos.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.nomproducto;
+            opt.dataset.precio = p.preciounitario;
+            datalist.appendChild(opt);
+          });
+
+          // Si hay coincidencia exacta, rellenar precio
+          const exacto = res.producto_exacto;
+          if (exacto && el.value.toLowerCase() === exacto.nomproducto.toLowerCase()) {
+            fila.querySelector('.campo-precio').value = parseFloat(exacto.preciounitario).toFixed(2);
+            calcularSubtotal(fila);
+          }
+        });
+      }, 300);
+    }
+
+    if (el.classList.contains('campo-cant') || el.classList.contains('campo-precio')) {
+      calcularSubtotal(el.closest('tr'));
+    }
+  });
+
+  // Cuando el usuario selecciona del datalist (change event)
+  document.getElementById('cuerpoItems').addEventListener('change', function (e) {
+    const el = e.target;
+    if (!el.classList.contains('busqueda-prod')) return;
+
+    const fila = el.closest('tr');
+    const datalist = fila.querySelector('datalist');
+    const opcion = Array.from(datalist.options).find(o => o.value === el.value);
+
+    if (opcion && opcion.dataset.precio) {
+      fila.querySelector('.campo-precio').value = parseFloat(opcion.dataset.precio).toFixed(2);
+      calcularSubtotal(fila);
+    } else {
+      // Llamar de nuevo para obtener precio exacto
+      fetch("{% url 'buscarProducto' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `busqueda=${encodeURIComponent(el.value)}&csrfmiddlewaretoken=${CSRF}`
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.producto_exacto) {
+          fila.querySelector('.campo-precio').value = parseFloat(res.producto_exacto.preciounitario).toFixed(2);
+          calcularSubtotal(fila);
+        }
+      });
+    }
+  });
+
+  // ── Cálculo ─────────────────────────────────────────────────────────────────
   function calcularSubtotal(fila) {
-    const cant = parseFloat(fila.querySelector('[name="cantidad[]"]').value) || 0;
-    const precio = parseFloat(fila.querySelector('[name="preciounitario[]"]').value) || 0;
-    const sub = (cant * precio).toFixed(2);
-    fila.querySelector('.subtotal-field').value = sub;
+    const cant = parseFloat(fila.querySelector('.campo-cant').value) || 0;
+    const precio = parseFloat(fila.querySelector('.campo-precio').value) || 0;
+    fila.querySelector('.subtotal-field').value = (cant * precio).toFixed(2);
     calcularTotal();
   }
 
   function calcularTotal() {
     let total = 0;
-    document.querySelectorAll('.subtotal-field').forEach(el => {
-      total += parseFloat(el.value) || 0;
-    });
+    document.querySelectorAll('.subtotal-field').forEach(el => total += parseFloat(el.value) || 0);
     document.getElementById('totalGeneral').textContent = 'S/. ' + total.toFixed(2);
   }
 
+  // ── Agregar / quitar filas ───────────────────────────────────────────────────
   function quitarFila(btn) {
-    const filas = document.querySelectorAll('#cuerpoItems tr');
-    if (filas.length === 1) return;
+    if (document.querySelectorAll('#cuerpoItems tr').length === 1) return;
     btn.closest('tr').remove();
     renumerarFilas();
     calcularTotal();
   }
 
   function renumerarFilas() {
-    document.querySelectorAll('#cuerpoItems tr .num-fila').forEach((td, i) => {
-      td.textContent = i + 1;
-    });
+    document.querySelectorAll('#cuerpoItems tr .num-fila').forEach((td, i) => td.textContent = i + 1);
   }
 
   document.getElementById('btnAgregarFila').addEventListener('click', function () {
-    numFilas++;
+    dlCounter++;
     const tbody = document.getElementById('cuerpoItems');
+    const num = tbody.children.length + 1;
     const fila = document.createElement('tr');
     fila.innerHTML = `
-      <td class="text-center num-fila">${tbody.children.length + 1}</td>
-      <td><input type="text" name="producto[]" class="form-control form-control-sm" placeholder="Producto" required></td>
+      <td class="text-center num-fila">${num}</td>
+      <td>
+        <input type="text" name="producto[]" class="form-control form-control-sm busqueda-prod" list="dl-${dlCounter}" placeholder="Buscar producto..." autocomplete="off" required>
+        <datalist id="dl-${dlCounter}"></datalist>
+      </td>
       <td><input type="text" name="descripcion[]" class="form-control form-control-sm" placeholder="Descripción"></td>
-      <td><input type="number" name="cantidad[]" class="form-control form-control-sm campo-calc" min="0.01" step="0.01" value="1" required></td>
-      <td><input type="number" name="preciounitario[]" class="form-control form-control-sm campo-calc" min="0" step="0.01" value="0.00" required></td>
+      <td><input type="number" name="cantidad[]" class="form-control form-control-sm campo-cant" min="0.01" step="0.01" value="1" required></td>
+      <td><input type="number" name="preciounitario[]" class="form-control form-control-sm campo-precio" min="0" step="0.01" value="0.00" required></td>
       <td><input type="number" name="subtotal[]" class="form-control form-control-sm subtotal-field" readonly value="0.00"></td>
       <td class="text-center">
-        <button type="button" class="btn btn-sm btn-danger btn-quitar" onclick="quitarFila(this)">
+        <button type="button" class="btn btn-sm btn-danger" onclick="quitarFila(this)">
           <i class="bi bi-dash-circle"></i>
         </button>
       </td>`;
     tbody.appendChild(fila);
-    fila.querySelectorAll('.campo-calc').forEach(inp => {
-      inp.addEventListener('input', () => calcularSubtotal(fila));
-    });
   });
 
-  document.getElementById('cuerpoItems').addEventListener('input', function (e) {
-    if (e.target.classList.contains('campo-calc')) {
-      calcularSubtotal(e.target.closest('tr'));
-    }
-  });
-
+  // ── Guardar ──────────────────────────────────────────────────────────────────
   document.getElementById('btnGuardar').addEventListener('click', function () {
+    if (!document.getElementById('idclienteForm').value) {
+      alert('Debe buscar y seleccionar un cliente primero.');
+      document.getElementById('doccliente').focus();
+      return;
+    }
+    document.getElementById('obsForm').value = document.getElementById('observaciones').value;
+    document.getElementById('idclienteForm').value = document.getElementById('idcliente').value;
+
     const form = document.getElementById('formCotizacion');
     if (!form.checkValidity()) { form.reportValidity(); return; }
 
-    const data = new FormData(form);
-    fetch("{% url 'cotizacionGuardar' %}", { method: 'POST', body: data })
+    fetch("{% url 'cotizacionGuardar' %}", { method: 'POST', body: new FormData(form) })
       .then(r => r.json())
       .then(res => {
         if (res.success) {

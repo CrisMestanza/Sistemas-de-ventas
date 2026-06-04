@@ -143,6 +143,7 @@ urlpatterns = [
     path('cotizaciones/guardar', cotizacion.guardar, name='cotizacionGuardar'),
     path('cotizaciones/imprimir/<int:id>', cotizacion.imprimir, name='cotizacionImprimir'),
     path('cotizaciones/eliminar/<int:id>', cotizacion.eliminar, name='cotizacionEliminar'),
+    path('cotizaciones/buscarCliente', cotizacion.buscarCliente, name='cotizacionBuscarCliente'),
 
     #TRANSACCIONES
     path('transacciones', transaccion.mostrar_Transaccion, name="MostrarTransaccion"),
