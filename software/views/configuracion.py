@@ -233,6 +233,33 @@ def agregarpem(request):
 
 
 
+def subirLogo(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    idempresa = request.POST.get('idempresa')
+    imagen = request.FILES.get('imagen')
+
+    if not imagen:
+        return JsonResponse({'error': 'No se seleccionó ninguna imagen'}, status=400)
+
+    try:
+        empresa = Empresa.objects.get(idempresa=idempresa)
+        logos_dir = os.path.join(settings.MEDIA_ROOT, 'logos')
+        os.makedirs(logos_dir, exist_ok=True)
+        ext = os.path.splitext(imagen.name)[1]
+        filename = f"logo_{empresa.idempresa}{ext}"
+        filepath = os.path.join(logos_dir, filename)
+        with open(filepath, 'wb') as f:
+            for chunk in imagen.chunks():
+                f.write(chunk)
+        empresa.logo = f"logos/{filename}"
+        empresa.save()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
 def produccion(request, id):
     empresa = Empresa.objects.get(idempresa=id)
     empresa.mododev = 1

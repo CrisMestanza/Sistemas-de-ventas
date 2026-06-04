@@ -35,7 +35,7 @@
                   <th scope="col">Dirección</th>
                   <th scope="col">Telefono</th>
                   <th scope="col">Modificar</th>
-                  <th scope="col">Subir .pem / Logo</th>
+                  <th scope="col">Cambiar Logo</th>
                   <th scope="col">Activar modo producción</th>
                   <th scope="col">Activar modo desarrollo</th>
                 </tr>
@@ -61,8 +61,8 @@
                         class="fa-solid fa-pen-to-square fa-2xl" style="color: #005eff;"></i></a>
                   </td>
                   <td>
-                    <a type="submit" id="btnEditar" class="btn " data-bs-toggle="modal" data-bs-target="#myModal3-{{ empresa.idempresa }}">
-                      <i class="fa-solid fa-file-lines fa-2xl" style="color: #005eff;"></i>
+                    <a class="btn" data-bs-toggle="modal" data-bs-target="#modalLogo-{{ empresa.idempresa }}">
+                      <i class="fa-solid fa-image fa-2xl" style="color: #005eff;"></i>
                     </a>
                   </td>
                   <td>
@@ -186,126 +186,38 @@
                   </div>
                 </div>
 
-                <!-- Modal de agregar .pem -->
-                <div class="modal" id="myModal3-{{ empresa.idempresa }}">
-                  <div class="modal-dialog">
+                <!-- Modal subir logo -->
+                <div class="modal fade" id="modalLogo-{{ empresa.idempresa }}" tabindex="-1">
+                  <div class="modal-dialog modal-sm">
                     <div class="modal-content">
-
-                      <!-- Cabecera del modal -->
                       <div class="modal-header">
-                        <h4 class="modal-title">Editar Empresa</h4>
-                        <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                        <h5 class="modal-title">Cambiar Logo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                       </div>
-
-                      <!-- Contenido del modal De editar-->
                       <div class="modal-body">
-
-                        <!-- inicio de form -->
-
-                        <form action="" method="post" enctype="multipart/form-data">
+                        {% if empresa.logo %}
+                        <div class="text-center mb-3">
+                          <img src="/media/{{ empresa.logo }}" alt="Logo actual" style="max-height:80px; object-fit:contain;">
+                          <p class="text-muted mt-1" style="font-size:12px;">Logo actual</p>
+                        </div>
+                        {% endif %}
+                        <form class="formLogo" enctype="multipart/form-data">
                           {% csrf_token %}
-                          <h4>Datos de la empresa</h4>
-
-                          <label for="nombreProducto2"><strong>Ruc</strong></label><br>
-                          <input type="hidden" class="form-control" name="idempresa" id="nombreProducto2"
-                            value="{{empresa.idempresa}}">
-                          <input type="text" class="form-control" name="ruc" id="nombreProducto2"
-                            value="{{empresa.ruc}}"><br>
-
-                          <label for="nombreProducto2"><strong>Razón social</strong></label><br>
-                          <input type="text" class="form-control" name="razonSocial" id="nombreProducto2"
-                            style="width: 465px;" value="{{empresa.razonsocial}}"><br>
-
-                          <label for="nombreProducto2"><strong>NombreComercia</strong></label><br>
-                          <input type="text" class="form-control" name="nombreComercia" id="nombreProducto2"
-                            style="width: 465px;" value="{{empresa.nombrecomercial}}"><br>
-
-                          <label for="nombreProducto2"><strong>Dirección</strong></label><br>
-                          <input type="text" class="form-control" name="Direccion" id="nombreProducto2"
-                            style="width: 465px;" value="{{empresa.direccion}}"><br>
-
-
-                          <label for="nombreProducto2"><strong>Telefono</strong></label><br>
-                          <input type="text" class="form-control" name="telefono" id="nombreProducto2"
-                            style="width: 465px;" value="{{empresa.telefono}}"><br>
-
-
-                          <label for="nombreProducto2"><strong>Usuario secundario(User)</strong></label><br>
-                          <input type="text" class="form-control" name="user" id="nombreProducto2" style="width: 465px;"
-                            value="{{empresa.usersec}}"><br>
-
-
-                          <label for="nombreProducto2"><strong>Usuario secundario(Password)</strong></label><br>
-                          <input type="text" class="form-control" name="password" id="nombreProducto2"
-                            style="width: 465px;" value="{{empresa.passwordsec}}"><br>
-
-
-                          <label for="certificado_password"><strong>Contraseña del certificado</strong></label><br>
-                          <input type="text" class="form-control" name="certificado_password" id="certificado_password"
-                            style="width: 465px;" value="{{empresa.ubigueo}}"><br>
-
-                          <!-- Archivo PEM -->
-                          <label for="pem"><strong>Subir archivo .pem</strong></label><br>
-                          <div class="input-group" style="width: 465px;">
-                            <span class="input-group-text">
-                              <i class="fa-solid fa-file-shield"></i>
-                            </span>
-                            <input type="file" class="form-control" name="pem" id="pem" accept=".pem">
-                          </div><br>
-
-                          <!-- Imagen -->
-                          <label for="imagen"><strong>Subir imagen</strong></label><br>
-                          <div class="input-group" style="width: 465px;">
-                            <span class="input-group-text">
-                              <i class="fa-solid fa-image"></i>
-                            </span>
-                            <input type="file" class="form-control" name="imagen" id="imagen" accept="image/*">
-                          </div>
-                          <br>
-
-                          <label><strong>Departamento</strong></label>
-                          <select class="form-select depPem" name="departamento">
-                            <option value="">Seleccione un departamento</option>
-                            {% for departamento in departamentos %}
-                            <option value="{{departamento.iddepartamentos}}">{{departamento.nombredepartamento}}
-                            </option>
-                            {% endfor %}
-                          </select>
-
-                          <label><strong>Provincia</strong></label>
-                          <select class="form-select provPem" name="provincia">
-                            <option value="">Seleccione una provincia</option>
-                          </select>
-
-                          <label><strong>Distrito</strong></label>
-                          <select class="form-select distPem" name="distrito">
-                            <option value="">Seleccione un distrito</option>
-                          </select>
-
-                          <label><strong>Ubigeo</strong></label>
-                          <input type="text" class="form-control ubiPem" name="ubigueo" readonly>
-
-                          <br>
-                          <!-- <label for="nombreProducto2">Imagen de la Empresa</label><br>
-                      <input type="file" name="imagenEmpresa" id="nombreProducto2" style="width: 465px;"> -->
-
-                          <div style="display:flex; margin-left:140px;">
-
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-primary btnPem">
-                                Guardar PEM
-                              </button>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                            </div>
-                          </div>
-
-
+                          <input type="hidden" name="idempresa" value="{{ empresa.idempresa }}">
+                          <label class="form-label fw-semibold">Seleccionar imagen</label>
+                          <input type="file" class="form-control" name="imagen" accept="image/*" required>
+                        </form>
                       </div>
-                      </form>
-
-                      <!-- fin del form -->
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary btnSubirLogo">
+                          <i class="fa-solid fa-upload"></i> Guardar Logo
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- fin modal logo -->
 
                     </div>
 
@@ -486,131 +398,24 @@
 
 
   // ==========================
-  // 🔥 MODAL PEM - DEPARTAMENTO
+  // Guardar Logo
   // ==========================
-  function cargarProvinciasPem(selectDepartamento) {
-    let form = selectDepartamento.closest('form');
-    let idDep = selectDepartamento.val();
-    let prov = form.find('.provPem');
-    let dist = form.find('.distPem');
-    let ubigeo = form.find('.ubiPem');
-
-    prov.html('<option value="">Seleccione una provincia</option>');
-    dist.html('<option value="">Seleccione un distrito</option>');
-    ubigeo.val('');
-
-    if (!idDep) {
-      return;
-    }
-
-    $.ajax({
-      type: "GET",
-      dataType: "json",
-      url: "{% url 'buscarProvincias' %}",
-      data: { selected_value: idDep },
-      success: function (response) {
-        $.each(response, function (i, item) {
-          prov.append('<option value="' + item.idprovincia + '">' + item.nombreprovincia + '</option>');
-        });
-      },
-      error: function () {
-        prov.html('<option value="">No se pudieron cargar provincias</option>');
-      }
-    });
-  }
-
-  $(document).on('change', '.depPem', function () {
-    cargarProvinciasPem($(this));
-  });
-
-
-  // ==========================
-  // 🔥 MODAL PEM - PROVINCIA
-  // ==========================
-  $(document).on('change', '.provPem', function () {
-
-    let form = $(this).closest('form');
-    let idProv = $(this).val();
-
-    let dist = form.find('.distPem');
-    let ubigeo = form.find('.ubiPem');
-
-    dist.html('<option value="">Seleccione un distrito</option>');
-    ubigeo.val('');
-
-    if (!idProv) {
-      return;
-    }
-
-    $.ajax({
-      type: "GET",
-      dataType: "json",
-      url: "{% url 'buscarDistritos' %}",
-      data: { selected_value: idProv },
-      success: function (response) {
-        $.each(response, function (i, item) {
-          dist.append('<option value="' + item.iddistrito + '">' + item.nombredistrito + '</option>');
-        });
-      },
-      error: function () {
-        dist.html('<option value="">No se pudieron cargar distritos</option>');
-      }
-    });
-
-  });
-
-
-  // ==========================
-  // 🔥 MODAL PEM - UBIGEO
-  // ==========================
-  $(document).on('change', '.distPem', function () {
-
-    let form = $(this).closest('form');
-    let idDist = $(this).val();
-
-    let ubigeo = form.find('.ubiPem');
-    ubigeo.val('');
-
-    if (!idDist) {
-      return;
-    }
-
-    $.ajax({
-      type: "GET",
-      dataType: "json",
-      url: "{% url 'ubigueo' %}",
-      data: { selected_value: idDist },
-      success: function (response) {
-
-        $.each(response, function (i, item) {
-          ubigeo.val(item.ubigeo);
-        });
-
-      }
-    });
-
-  });
-
-  $(document).on("click", ".btnPem", function () {
-
-    var formData = new FormData($(this).closest('form')[0]);
-
+  $(document).on("click", ".btnSubirLogo", function () {
+    var formData = new FormData($(this).closest('.modal').find('form.formLogo')[0]);
     $.ajax({
       type: "POST",
-      url: "{% url 'agregarpem' %}",
+      url: "{% url 'subirLogo' %}",
       data: formData,
       processData: false,
       contentType: false,
       success: function (response) {
-        Swal.fire({
-          title: 'PEM actualizado correctamente',
-          icon: 'success'
-        }).then(() => {
-          window.location.href = "{% url 'configuracion' %}";
-        });
+        Swal.fire({ title: 'Logo actualizado', icon: 'success' })
+          .then(() => { window.location.href = "{% url 'configuracion' %}"; });
+      },
+      error: function () {
+        Swal.fire({ title: 'Error al subir el logo', icon: 'error' });
       }
     });
-
   });
 
 
