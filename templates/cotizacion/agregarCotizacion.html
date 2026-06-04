@@ -1,305 +1,307 @@
 {% extends 'plantilla/base.html' %}
 {% block main %}
 <main id="main" class="main">
-  <div class="pagetitle">
-    <h1>Nueva Cotización</h1>
-    <nav>
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'cotizaciones' %}">Cotizaciones</a></li>
-        <li class="breadcrumb-item active">Nueva</li>
-      </ol>
-    </nav>
-  </div>
-
-  <section class="section">
-    <div class="row">
-      <div class="col-lg-12">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Datos del Cliente</h5>
-
-            <div class="row g-3 mb-4">
-              <div class="col-md-4">
-                <label class="form-label fw-semibold">DNI / RUC</label>
-                <div class="input-group">
-                  <input type="text" id="doccliente" class="form-control" maxlength="11" placeholder="Ingrese DNI o RUC">
-                  <button class="btn btn-primary" type="button" id="btnBuscarCliente">
-                    <i class="bi bi-search"></i> Buscar
-                  </button>
-                </div>
-                <div id="msgCliente" class="form-text"></div>
-              </div>
-              <div class="col-md-5">
-                <label class="form-label fw-semibold">Nombre / Razón Social</label>
-                <input type="text" id="nomcliente" class="form-control" readonly placeholder="Se autocompleta al buscar">
-              </div>
-              <div class="col-md-3">
-                <label class="form-label fw-semibold">Dirección</label>
-                <input type="text" id="dircliente" class="form-control" readonly placeholder="—">
-              </div>
-              <input type="hidden" id="idcliente" name="idcliente">
-            </div>
-
-            <h5 class="card-title">Ítems de la Cotización</h5>
-            <form id="formCotizacion">
-              {% csrf_token %}
-              <input type="hidden" name="idcliente" id="idclienteForm">
-              <input type="hidden" name="observaciones" id="obsForm">
-
-              <div class="table-responsive mb-3">
-                <table class="table table-bordered align-middle" id="tablaItems">
-                  <thead class="table-dark">
-                    <tr>
-                      <th style="width:4%">#</th>
-                      <th style="width:24%">Producto</th>
-                      <th style="width:26%">Descripción</th>
-                      <th style="width:9%">Cant.</th>
-                      <th style="width:13%">P. Unitario</th>
-                      <th style="width:13%">Subtotal</th>
-                      <th style="width:6%"></th>
-                    </tr>
-                  </thead>
-                  <tbody id="cuerpoItems">
-                    <tr>
-                      <td class="text-center num-fila">1</td>
-                      <td>
-                        <input type="text" name="producto[]" class="form-control form-control-sm busqueda-prod" list="dl-0" placeholder="Buscar producto..." autocomplete="off" required>
-                        <datalist id="dl-0"></datalist>
-                      </td>
-                      <td><input type="text" name="descripcion[]" class="form-control form-control-sm" placeholder="Descripción"></td>
-                      <td><input type="number" name="cantidad[]" class="form-control form-control-sm campo-cant" min="0.01" step="0.01" value="1" required></td>
-                      <td><input type="number" name="preciounitario[]" class="form-control form-control-sm campo-precio" min="0" step="0.01" value="0.00" required></td>
-                      <td><input type="number" name="subtotal[]" class="form-control form-control-sm subtotal-field" readonly value="0.00"></td>
-                      <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-danger" onclick="quitarFila(this)">
-                          <i class="bi bi-dash-circle"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="row align-items-center mb-3">
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Observaciones</label>
-                  <input type="text" id="observaciones" class="form-control" placeholder="Opcional...">
-                </div>
-              </div>
-
-              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <button type="button" class="btn btn-outline-success" id="btnAgregarFila">
-                  <i class="bi bi-plus-circle me-1"></i> Agregar ítem
-                </button>
-                <div class="d-flex align-items-center gap-3">
-                  <h5 class="mb-0">Total: <span class="text-success fw-bold" id="totalGeneral">S/. 0.00</span></h5>
-                  <button type="button" class="btn btn-primary px-4" id="btnGuardar">
-                    <i class="bi bi-save me-1"></i> Guardar Cotización
-                  </button>
-                </div>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      </div>
+    <div class="pagetitle">
+        <h1>Cotizaciones</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item active">Nueva Cotización</li>
+            </ol>
+        </nav>
     </div>
-  </section>
+
+    <section class="section dashboard">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Nueva Cotización</h5>
+
+                        <h4>Datos del cliente:</h4>
+                        <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
+                            <div>
+                                <label>Nº Documento (DNI/RUC)</label><br>
+                                <input class="form-control" type="text" id="doccliente" maxlength="11" placeholder="DNI o RUC" style="width:180px;">
+                                <input type="button" class="btn btn-dark" value="Buscar" id="consultar">
+                            </div>
+                            <div>
+                                <label>Razón social / Nombres completos</label><br>
+                                <input class="form-control" type="text" id="nomcliente" readonly style="width:380px;" placeholder="Se completa al buscar">
+                            </div>
+                            <div>
+                                <label>Dirección</label><br>
+                                <input class="form-control" type="text" id="dircliente" readonly style="width:280px;" placeholder="—">
+                            </div>
+                            <div id="msgCliente" style="font-size:12px; color:green;"></div>
+                            <input type="hidden" id="idclienteHidden">
+                        </div>
+
+                        <br>
+                        <h4>Datos de los productos:</h4>
+                        <br>
+
+                        <form id="formCotizacion" autocomplete="off">
+                            {% csrf_token %}
+                            <input type="hidden" name="idcliente" id="idclienteForm">
+
+                            <table class="table datatable" id="tablaCotizacion">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Descripción</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unitario</th>
+                                        <th>Subtotal</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpoItems">
+                                    <tr>
+                                        <td>
+                                            <div class="input-group">
+                                                <input class="form-control busqueda-prod" type="text" list="dl-0"
+                                                    name="producto[]" placeholder="Buscar producto..." required>
+                                                <datalist id="dl-0"></datalist>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input class="form-control" type="text" name="descripcion[]" placeholder="Opcional">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input class="form-control campo-cant" type="number" name="cantidad[]"
+                                                    min="0.01" step="0.01" value="1" required style="width:80px;">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input class="form-control campo-precio" type="number" name="preciounitario[]"
+                                                    min="0" step="0.01" value="0.00" required style="width:100px;">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input class="form-control subtotal-field" type="number" name="subtotal[]"
+                                                    readonly value="0.00" style="width:100px;">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="quitarFila(this)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:10px;">
+                                <button type="button" class="btn btn-success" id="btnAgregarFila">
+                                    <i class="bi bi-plus-circle"></i> Agregar producto
+                                </button>
+
+                                <div style="display:flex; align-items:center; gap:20px;">
+                                    <div class="input-group" style="width:320px;">
+                                        <label class="input-group-text">Observaciones</label>
+                                        <input type="text" class="form-control" id="observaciones" name="observaciones" placeholder="Opcional">
+                                    </div>
+                                    <h5 style="margin:0;">Total: <strong id="totalGeneral" style="color:#198754;">S/. 0.00</strong></h5>
+                                    <button type="button" class="btn btn-primary" id="btnGuardar">
+                                        <i class="bi bi-save"></i> Guardar Cotización
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-  const CSRF = '{{ csrf_token }}';
-  let dlCounter = 0;
+    const CSRF = '{{ csrf_token }}';
+    let dlCounter = 0;
 
-  // ── Búsqueda de cliente por DNI/RUC ────────────────────────────────────────
-  document.getElementById('btnBuscarCliente').addEventListener('click', function () {
-    const doc = document.getElementById('doccliente').value.trim();
-    const msg = document.getElementById('msgCliente');
-    msg.textContent = 'Buscando...';
-    msg.className = 'form-text text-muted';
-
-    fetch("{% url 'cotizacionBuscarCliente' %}", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `doc=${encodeURIComponent(doc)}&csrfmiddlewaretoken=${CSRF}`
-    })
-    .then(r => r.json())
-    .then(res => {
-      if (res.error) {
-        msg.textContent = res.error;
-        msg.className = 'form-text text-danger';
-        return;
-      }
-      document.getElementById('nomcliente').value = res.nombre;
-      document.getElementById('dircliente').value = res.direccion || '';
-      document.getElementById('idcliente').value = res.idcliente;
-      document.getElementById('idclienteForm').value = res.idcliente;
-
-      if (res.created) {
-        msg.textContent = '✓ Cliente creado y guardado en el sistema.';
-        msg.className = 'form-text text-success';
-      } else {
-        msg.textContent = '✓ Cliente encontrado.';
-        msg.className = 'form-text text-success';
-      }
-    })
-    .catch(() => {
-      msg.textContent = 'Error al consultar.';
-      msg.className = 'form-text text-danger';
+    // ── Búsqueda de cliente ───────────────────────────────────────────────────
+    document.getElementById('consultar').addEventListener('click', buscarCliente);
+    document.getElementById('doccliente').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); buscarCliente(); }
     });
-  });
 
-  document.getElementById('doccliente').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnBuscarCliente').click(); }
-  });
+    function buscarCliente() {
+        const doc = document.getElementById('doccliente').value.trim();
+        const msg = document.getElementById('msgCliente');
+        if (!doc) return;
 
-  // ── Búsqueda de productos (autocomplete) ────────────────────────────────────
-  let searchTimer = null;
+        msg.textContent = 'Buscando...';
+        msg.style.color = '#555';
 
-  document.getElementById('cuerpoItems').addEventListener('input', function (e) {
-    const el = e.target;
-
-    if (el.classList.contains('busqueda-prod')) {
-      clearTimeout(searchTimer);
-      const fila = el.closest('tr');
-      const datalist = fila.querySelector('datalist');
-      const busqueda = el.value.trim();
-
-      if (!busqueda) return;
-
-      searchTimer = setTimeout(() => {
-        fetch("{% url 'buscarProducto' %}", {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `busqueda=${encodeURIComponent(busqueda)}&csrfmiddlewaretoken=${CSRF}`
+        fetch("{% url 'cotizacionBuscarCliente' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `doc=${encodeURIComponent(doc)}&csrfmiddlewaretoken=${CSRF}`
         })
         .then(r => r.json())
         .then(res => {
-          datalist.innerHTML = '';
-          res.productos.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.nomproducto;
-            opt.dataset.precio = p.preciounitario;
-            datalist.appendChild(opt);
-          });
+            if (res.error) {
+                msg.textContent = '✗ ' + res.error;
+                msg.style.color = 'red';
+                return;
+            }
+            document.getElementById('nomcliente').value = res.nombre;
+            document.getElementById('dircliente').value = res.direccion || '-';
+            document.getElementById('idclienteHidden').value = res.idcliente;
+            document.getElementById('idclienteForm').value = res.idcliente;
+            msg.textContent = res.created ? '✓ Cliente nuevo guardado.' : '✓ Cliente encontrado.';
+            msg.style.color = 'green';
+        })
+        .catch(() => { msg.textContent = 'Error al consultar.'; msg.style.color = 'red'; });
+    }
 
-          // Si hay coincidencia exacta, rellenar precio
-          const exacto = res.producto_exacto;
-          if (exacto && el.value.toLowerCase() === exacto.nomproducto.toLowerCase()) {
-            fila.querySelector('.campo-precio').value = parseFloat(exacto.preciounitario).toFixed(2);
+    // ── Búsqueda de productos ─────────────────────────────────────────────────
+    let searchTimer = null;
+
+    document.getElementById('cuerpoItems').addEventListener('input', function (e) {
+        const el = e.target;
+
+        if (el.classList.contains('busqueda-prod')) {
+            clearTimeout(searchTimer);
+            const fila = el.closest('tr');
+            const datalist = fila.querySelector('datalist');
+            const val = el.value.trim();
+            if (!val) return;
+
+            searchTimer = setTimeout(() => {
+                fetch("{% url 'buscarProducto' %}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `busqueda=${encodeURIComponent(val)}&csrfmiddlewaretoken=${CSRF}`
+                })
+                .then(r => r.json())
+                .then(res => {
+                    datalist.innerHTML = '';
+                    res.productos.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.nomproducto;
+                        opt.dataset.precio = p.preciounitario;
+                        datalist.appendChild(opt);
+                    });
+                    if (res.producto_exacto && el.value.toLowerCase() === res.producto_exacto.nomproducto.toLowerCase()) {
+                        fila.querySelector('.campo-precio').value = parseFloat(res.producto_exacto.preciounitario).toFixed(2);
+                        calcularSubtotal(fila);
+                    }
+                });
+            }, 300);
+        }
+
+        if (el.classList.contains('campo-cant') || el.classList.contains('campo-precio')) {
+            calcularSubtotal(el.closest('tr'));
+        }
+    });
+
+    document.getElementById('cuerpoItems').addEventListener('change', function (e) {
+        const el = e.target;
+        if (!el.classList.contains('busqueda-prod')) return;
+        const fila = el.closest('tr');
+        const datalist = fila.querySelector('datalist');
+        const opcion = Array.from(datalist.options).find(o => o.value === el.value);
+        if (opcion && opcion.dataset.precio) {
+            fila.querySelector('.campo-precio').value = parseFloat(opcion.dataset.precio).toFixed(2);
             calcularSubtotal(fila);
-          }
-        });
-      }, 300);
-    }
-
-    if (el.classList.contains('campo-cant') || el.classList.contains('campo-precio')) {
-      calcularSubtotal(el.closest('tr'));
-    }
-  });
-
-  // Cuando el usuario selecciona del datalist (change event)
-  document.getElementById('cuerpoItems').addEventListener('change', function (e) {
-    const el = e.target;
-    if (!el.classList.contains('busqueda-prod')) return;
-
-    const fila = el.closest('tr');
-    const datalist = fila.querySelector('datalist');
-    const opcion = Array.from(datalist.options).find(o => o.value === el.value);
-
-    if (opcion && opcion.dataset.precio) {
-      fila.querySelector('.campo-precio').value = parseFloat(opcion.dataset.precio).toFixed(2);
-      calcularSubtotal(fila);
-    } else {
-      // Llamar de nuevo para obtener precio exacto
-      fetch("{% url 'buscarProducto' %}", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `busqueda=${encodeURIComponent(el.value)}&csrfmiddlewaretoken=${CSRF}`
-      })
-      .then(r => r.json())
-      .then(res => {
-        if (res.producto_exacto) {
-          fila.querySelector('.campo-precio').value = parseFloat(res.producto_exacto.preciounitario).toFixed(2);
-          calcularSubtotal(fila);
-        }
-      });
-    }
-  });
-
-  // ── Cálculo ─────────────────────────────────────────────────────────────────
-  function calcularSubtotal(fila) {
-    const cant = parseFloat(fila.querySelector('.campo-cant').value) || 0;
-    const precio = parseFloat(fila.querySelector('.campo-precio').value) || 0;
-    fila.querySelector('.subtotal-field').value = (cant * precio).toFixed(2);
-    calcularTotal();
-  }
-
-  function calcularTotal() {
-    let total = 0;
-    document.querySelectorAll('.subtotal-field').forEach(el => total += parseFloat(el.value) || 0);
-    document.getElementById('totalGeneral').textContent = 'S/. ' + total.toFixed(2);
-  }
-
-  // ── Agregar / quitar filas ───────────────────────────────────────────────────
-  function quitarFila(btn) {
-    if (document.querySelectorAll('#cuerpoItems tr').length === 1) return;
-    btn.closest('tr').remove();
-    renumerarFilas();
-    calcularTotal();
-  }
-
-  function renumerarFilas() {
-    document.querySelectorAll('#cuerpoItems tr .num-fila').forEach((td, i) => td.textContent = i + 1);
-  }
-
-  document.getElementById('btnAgregarFila').addEventListener('click', function () {
-    dlCounter++;
-    const tbody = document.getElementById('cuerpoItems');
-    const num = tbody.children.length + 1;
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td class="text-center num-fila">${num}</td>
-      <td>
-        <input type="text" name="producto[]" class="form-control form-control-sm busqueda-prod" list="dl-${dlCounter}" placeholder="Buscar producto..." autocomplete="off" required>
-        <datalist id="dl-${dlCounter}"></datalist>
-      </td>
-      <td><input type="text" name="descripcion[]" class="form-control form-control-sm" placeholder="Descripción"></td>
-      <td><input type="number" name="cantidad[]" class="form-control form-control-sm campo-cant" min="0.01" step="0.01" value="1" required></td>
-      <td><input type="number" name="preciounitario[]" class="form-control form-control-sm campo-precio" min="0" step="0.01" value="0.00" required></td>
-      <td><input type="number" name="subtotal[]" class="form-control form-control-sm subtotal-field" readonly value="0.00"></td>
-      <td class="text-center">
-        <button type="button" class="btn btn-sm btn-danger" onclick="quitarFila(this)">
-          <i class="bi bi-dash-circle"></i>
-        </button>
-      </td>`;
-    tbody.appendChild(fila);
-  });
-
-  // ── Guardar ──────────────────────────────────────────────────────────────────
-  document.getElementById('btnGuardar').addEventListener('click', function () {
-    if (!document.getElementById('idclienteForm').value) {
-      alert('Debe buscar y seleccionar un cliente primero.');
-      document.getElementById('doccliente').focus();
-      return;
-    }
-    document.getElementById('obsForm').value = document.getElementById('observaciones').value;
-    document.getElementById('idclienteForm').value = document.getElementById('idcliente').value;
-
-    const form = document.getElementById('formCotizacion');
-    if (!form.checkValidity()) { form.reportValidity(); return; }
-
-    fetch("{% url 'cotizacionGuardar' %}", { method: 'POST', body: new FormData(form) })
-      .then(r => r.json())
-      .then(res => {
-        if (res.success) {
-          window.location.href = `/cotizaciones/imprimir/${res.id}`;
         } else {
-          alert('Error: ' + res.error);
+            fetch("{% url 'buscarProducto' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `busqueda=${encodeURIComponent(el.value)}&csrfmiddlewaretoken=${CSRF}`
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.producto_exacto) {
+                    fila.querySelector('.campo-precio').value = parseFloat(res.producto_exacto.preciounitario).toFixed(2);
+                    calcularSubtotal(fila);
+                }
+            });
         }
-      })
-      .catch(() => alert('Error al guardar'));
-  });
+    });
+
+    // ── Cálculo ───────────────────────────────────────────────────────────────
+    function calcularSubtotal(fila) {
+        const cant = parseFloat(fila.querySelector('.campo-cant').value) || 0;
+        const precio = parseFloat(fila.querySelector('.campo-precio').value) || 0;
+        fila.querySelector('.subtotal-field').value = (cant * precio).toFixed(2);
+        calcularTotal();
+    }
+
+    function calcularTotal() {
+        let total = 0;
+        document.querySelectorAll('.subtotal-field').forEach(el => total += parseFloat(el.value) || 0);
+        document.getElementById('totalGeneral').textContent = 'S/. ' + total.toFixed(2);
+    }
+
+    // ── Filas ─────────────────────────────────────────────────────────────────
+    function quitarFila(btn) {
+        if (document.querySelectorAll('#cuerpoItems tr').length === 1) return;
+        btn.closest('tr').remove();
+        calcularTotal();
+    }
+
+    document.getElementById('btnAgregarFila').addEventListener('click', function () {
+        dlCounter++;
+        const tbody = document.getElementById('cuerpoItems');
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+            <td>
+                <div class="input-group">
+                    <input class="form-control busqueda-prod" type="text" list="dl-${dlCounter}"
+                        name="producto[]" placeholder="Buscar producto..." required>
+                    <datalist id="dl-${dlCounter}"></datalist>
+                </div>
+            </td>
+            <td><div class="input-group"><input class="form-control" type="text" name="descripcion[]" placeholder="Opcional"></div></td>
+            <td><div class="input-group"><input class="form-control campo-cant" type="number" name="cantidad[]" min="0.01" step="0.01" value="1" required style="width:80px;"></div></td>
+            <td><div class="input-group"><input class="form-control campo-precio" type="number" name="preciounitario[]" min="0" step="0.01" value="0.00" required style="width:100px;"></div></td>
+            <td><div class="input-group"><input class="form-control subtotal-field" type="number" name="subtotal[]" readonly value="0.00" style="width:100px;"></div></td>
+            <td><button type="button" class="btn btn-danger btn-sm" onclick="quitarFila(this)"><i class="bi bi-trash"></i></button></td>`;
+        tbody.appendChild(fila);
+    });
+
+    // ── Guardar ───────────────────────────────────────────────────────────────
+    document.getElementById('btnGuardar').addEventListener('click', function () {
+        if (!document.getElementById('idclienteForm').value) {
+            Swal.fire({ title: 'Cliente requerido', text: 'Busque y seleccione un cliente primero.', icon: 'warning', confirmButtonText: 'Ok' });
+            document.getElementById('doccliente').focus();
+            return;
+        }
+
+        const form = document.getElementById('formCotizacion');
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        fetch("{% url 'cotizacionGuardar' %}", { method: 'POST', body: new FormData(form) })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                Swal.fire({
+                    title: 'Cotización guardada',
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ver / Imprimir',
+                    cancelButtonText: 'Nueva cotización'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        window.open(`/cotizaciones/imprimir/${res.id}`, '_blank');
+                    }
+                    window.location.href = "{% url 'cotizaciones' %}";
+                });
+            } else {
+                Swal.fire({ title: 'Error', text: res.error, icon: 'error', confirmButtonText: 'Ok' });
+            }
+        })
+        .catch(() => Swal.fire({ title: 'Error', text: 'No se pudo guardar.', icon: 'error' }));
+    });
 </script>
 {% endblock %}
