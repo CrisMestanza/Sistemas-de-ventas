@@ -53,7 +53,7 @@
     <div class="d-flex align-items-center justify-content-between">
       <a href="{% url 'index' %}" class="logo d-flex align-items-center">
         {% if empresa_global.logo %}
-        <img src="/media/{{ empresa_global.logo }}" alt="Logo" style="max-height:40px; object-fit:contain;">
+        <img src="/media/{{ empresa_global.logo }}" alt="Logo" style="max-height:36px; max-width:36px; object-fit:contain; margin-right:8px; flex-shrink:0;">
         {% else %}
         <img src="{% static 'img/mestanza.png' %}" alt="">
         {% endif %}
