@@ -1,3 +1,4 @@
+import os
 from django.shortcuts import redirect, render
 from django.conf import settings
 from software.models.empresaModel import Empresa
@@ -206,6 +207,17 @@ def agregarpem(request):
 
         if imagen:
             files["logo_path"] = (imagen.name, imagen, imagen.content_type)
+            # Guardar logo localmente en media/logos/
+            logos_dir = os.path.join(settings.MEDIA_ROOT, 'logos')
+            os.makedirs(logos_dir, exist_ok=True)
+            ext = os.path.splitext(imagen.name)[1]
+            filename = f"logo_{empresa.idempresa}{ext}"
+            filepath = os.path.join(logos_dir, filename)
+            with open(filepath, 'wb') as f:
+                for chunk in imagen.chunks():
+                    f.write(chunk)
+            empresa.logo = f"logos/{filename}"
+            empresa.save()
 
         try:
             response = requests.post(url, data=data, files=files, headers=headers)

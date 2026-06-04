@@ -29,12 +29,13 @@
             <table class="table datatable">
               <thead>
                 <tr>
+                  <th scope="col">Logo</th>
                   <th scope="col">Ruc</th>
                   <th scope="col">Razón Social</th>
                   <th scope="col">Dirección</th>
                   <th scope="col">Telefono</th>
                   <th scope="col">Modificar</th>
-                  <th scope="col">Subir .pem</th>
+                  <th scope="col">Subir .pem / Logo</th>
                   <th scope="col">Activar modo producción</th>
                   <th scope="col">Activar modo desarrollo</th>
                 </tr>
@@ -44,6 +45,13 @@
               <tbody>
                 {% for empresa in empresas %}
                 <tr>
+                  <td>
+                    {% if empresa.logo %}
+                    <img src="/media/{{ empresa.logo }}" alt="Logo" style="height:48px; object-fit:contain;">
+                    {% else %}
+                    <span class="text-muted">Sin logo</span>
+                    {% endif %}
+                  </td>
                   <td>{{empresa.ruc}}</td>
                   <td>{{empresa.razonsocial}}</td>
                   <td>{{empresa.direccion}}</td>
