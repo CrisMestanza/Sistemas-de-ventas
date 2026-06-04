@@ -19,6 +19,7 @@ from .views import proveedores
 from .views import registro
 from .views import registroValorizado
 from .views import cotizacion
+from .views import clientes as clientesView
 
 urlpatterns = [
     #login
@@ -137,6 +138,12 @@ urlpatterns = [
     path('registro-valorizado', registroValorizado.registro_valorizado, name='registro_valorizado'),
     path('registro-valorizado/excel', registroValorizado.export_valorizado_excel, name='registro_valorizado_excel'),
     path('registro-valorizado/pdf', registroValorizado.export_valorizado_pdf, name='registro_valorizado_pdf'),
+
+    # Clientes
+    path('clientes', clientesView.clientes_lista, name='clientesLista'),
+    path('clientes/cuentas', clientesView.cuentas_por_cliente, name='cuentasPorCliente'),
+    path('clientes/cuentas/agregar', clientesView.agregar_cuenta, name='agregarCuenta'),
+    path('clientes/cuentas/eliminar/<int:id>', clientesView.eliminar_cuenta, name='eliminarCuenta'),
 
     # Cotizaciones
     path('cotizaciones', cotizacion.cotizaciones, name='cotizaciones'),

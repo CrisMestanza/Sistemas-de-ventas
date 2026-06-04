@@ -67,6 +67,29 @@
                             </div>
 
                             <br>
+                            <!-- Cuentas bancarias del cliente -->
+                            <div id="seccionCuentas" style="display:none;">
+                              <h4>Cuentas bancarias del cliente</h4>
+                              <div id="listaCuentasExistentes" style="margin-bottom:8px;"></div>
+
+                              <table class="table table-bordered table-sm" id="tablaCuentasNuevas" style="width:auto;">
+                                <thead class="table-dark">
+                                  <tr>
+                                    <th>Banco</th>
+                                    <th>Tipo</th>
+                                    <th>N° Cuenta</th>
+                                    <th></th>
+                                  </tr>
+                                </thead>
+                                <tbody id="cuerpoCuentas"></tbody>
+                              </table>
+                              <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarCuenta">
+                                <i class="bi bi-plus-circle"></i> Agregar cuenta
+                              </button>
+                              <hr>
+                            </div>
+
+                            <br>
                             <h4>Datos de la venta</h4>
                             <div style="display:flex">
                                 <!-- <div class="input-group" id="compra">
@@ -606,6 +629,104 @@
                 $("#nomcliente").val("Longitud inválida");
             }
         });
+
+        // ── Cuentas bancarias ────────────────────────────────────────────────
+        const BANCOS = ['BCP','Interbank','BBVA','Scotiabank','BanBif','Mibanco',
+                        'Banco de la Nación','Banco Pichincha','Banco Falabella','Yape / BCP','Plin'];
+
+        let idClienteActual = null;
+
+        function cargarCuentas(idcliente) {
+            idClienteActual = idcliente;
+            $('#seccionCuentas').show();
+            $('#listaCuentasExistentes').html('<small class="text-muted">Cargando...</small>');
+            $('#cuerpoCuentas').empty();
+
+            $.get("{% url 'cuentasPorCliente' %}", { idcliente: idcliente }, function (cuentas) {
+                if (cuentas.length === 0) {
+                    $('#listaCuentasExistentes').html('<small class="text-muted">Sin cuentas registradas.</small>');
+                } else {
+                    let html = '';
+                    cuentas.forEach(c => {
+                        html += `<span class="badge bg-primary me-1 mb-1" style="font-size:13px;">
+                            ${c.banco} · ${c.numero_cuenta} <small>(${c.tipo_cuenta})</small>
+                        </span>`;
+                    });
+                    $('#listaCuentasExistentes').html(html);
+                }
+            });
+        }
+
+        // Disparar cargarCuentas cuando se encuentre un cliente (buscamos el numdoc en la BD local)
+        $('#consultar').on('click', function () {
+            // pequeño delay para esperar la respuesta del DNI/RUC
+            setTimeout(function () {
+                const doc = $('#doccliente').val().trim();
+                if (!doc || doc === '-') return;
+                $.ajax({
+                    type: 'POST',
+                    url: "{% url 'cotizacionBuscarCliente' %}",
+                    data: { doc: doc, csrfmiddlewaretoken: '{{ csrf_token }}' },
+                    success: function (res) {
+                        if (res.idcliente) cargarCuentas(res.idcliente);
+                    }
+                });
+            }, 800);
+        });
+
+        $('#btnAgregarCuenta').on('click', function () {
+            const fila = `<tr>
+                <td>
+                  <select class="form-select form-select-sm cuentaBanco" style="min-width:140px;">
+                    <option value="">-- Banco --</option>
+                    ${BANCOS.map(b => `<option value="${b}">${b}</option>`).join('')}
+                  </select>
+                </td>
+                <td>
+                  <select class="form-select form-select-sm cuentaTipo">
+                    <option value="Ahorro">Ahorro</option>
+                    <option value="Corriente">Corriente</option>
+                    <option value="CCI">CCI</option>
+                  </select>
+                </td>
+                <td><input type="text" class="form-control form-control-sm cuentaNumero" placeholder="N° cuenta"></td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-success btnGuardarFilaCuenta"><i class="bi bi-save"></i></button>
+                  <button type="button" class="btn btn-sm btn-danger ms-1" onclick="$(this).closest('tr').remove()"><i class="bi bi-x"></i></button>
+                </td>
+            </tr>`;
+            $('#cuerpoCuentas').append(fila);
+        });
+
+        $(document).on('click', '.btnGuardarFilaCuenta', function () {
+            const fila = $(this).closest('tr');
+            const banco = fila.find('.cuentaBanco').val();
+            const tipo = fila.find('.cuentaTipo').val();
+            const numero = fila.find('.cuentaNumero').val().trim();
+
+            if (!banco || !numero) {
+                Swal.fire({ title: 'Completa banco y número', icon: 'warning', confirmButtonText: 'Ok' });
+                return;
+            }
+            if (!idClienteActual) {
+                Swal.fire({ title: 'Primero busca un cliente', icon: 'warning', confirmButtonText: 'Ok' });
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'agregarCuenta' %}",
+                data: { idcliente: idClienteActual, banco, numero_cuenta: numero, tipo_cuenta: tipo, csrfmiddlewaretoken: '{{ csrf_token }}' },
+                success: function (res) {
+                    fila.remove();
+                    cargarCuentas(idClienteActual);
+                },
+                error: function () {
+                    Swal.fire({ title: 'Error al guardar cuenta', icon: 'error' });
+                }
+            });
+        });
+        // ── Fin cuentas bancarias ────────────────────────────────────────────
 
         //Calcular el total
         $("body").on("input", "#cantidad", function (e) {
