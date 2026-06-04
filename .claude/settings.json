@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Select-String \"\\\\.sql\")",
+      "Bash(Remove-Item \"C:\\\\Users\\\\CRISTIAN\\\\Desktop\\\\apiSunat\\\\docker-compose.yml\")",
+      "Bash(git commit -m ' *)",
+      "Bash(ls \"C:\\\\xampp\\\\htdocs\\\\API_SUNAT\")",
+      "Read(//c/xampp/htdocs/API_SUNAT/**)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\CRISTIAN\\\\Desktop\\\\apiSunat\\\\Sistemas-de-ventas\" -Directory)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\CRISTIAN\\\\Desktop\\\\apiSunat\\\\Sistemas-de-ventas\\\\software\\\\models\" -Filter \"*.py\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\CRISTIAN\\Desktop\\apiSunat"
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{% extends 'plantilla/base.html' %}
+{% block main %}
+<main id="main" class="main">
+  <div class="pagetitle">
+    <h1>Cotizaciones</h1>
+    <nav>
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+        <li class="breadcrumb-item active">Cotizaciones</li>
+      </ol>
+    </nav>
+  </div>
+
+  <section class="section">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Listado de Cotizaciones</h5>
+            <a href="{% url 'cotizacionAgregar' %}" class="btn btn-success mb-3">
+              <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
+            </a>
+            <table class="table datatable table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>N° Cotización</th>
+                  <th>Fecha</th>
+                  <th>Cliente</th>
+                  <th>Total</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in cotizaciones %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>COT-{{ c.idcotizacion|stringformat:"04d" }}</td>
+                  <td>{{ c.fecha|date:"d/m/Y" }}</td>
+                  <td>{{ c.idcliente.razonsocial }}</td>
+                  <td>S/. {{ c.total|floatformat:2 }}</td>
+                  <td>
+                    <a href="{% url 'cotizacionImprimir' id=c.idcotizacion %}" target="_blank"
+                       class="btn btn-sm btn-primary" title="Ver / Imprimir">
+                      <i class="bi bi-printer"></i>
+                    </a>
+                    <a href="{% url 'cotizacionEliminar' id=c.idcotizacion %}"
+                       class="btn btn-sm btn-danger ms-1"
+                       onclick="return confirm('¿Eliminar esta cotización?')" title="Eliminar">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6" class="text-center text-muted">No hay cotizaciones registradas.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

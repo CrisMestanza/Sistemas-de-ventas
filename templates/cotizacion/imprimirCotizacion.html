@@ -1,0 +1,316 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotización COT-{{ cotizacion.idcotizacion|stringformat:"04d" }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      color: #222;
+      background: #f0f0f0;
+    }
+
+    .btn-imprimir {
+      display: block;
+      margin: 20px auto 16px;
+      padding: 10px 32px;
+      background: #0d6efd;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      width: fit-content;
+    }
+    .btn-volver {
+      display: block;
+      margin: 0 auto 30px;
+      padding: 8px 24px;
+      background: #6c757d;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      width: fit-content;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .pagina-a4 {
+      width: 210mm;
+      min-height: 297mm;
+      background: #fff;
+      margin: 0 auto 30px;
+      padding: 16mm 18mm;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Encabezado */
+    .encabezado {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #1a3c6e;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .empresa-info h2 {
+      font-size: 16px;
+      color: #1a3c6e;
+      font-weight: bold;
+    }
+    .empresa-info p { font-size: 11px; color: #555; margin-top: 2px; }
+
+    .cot-box {
+      border: 2px solid #1a3c6e;
+      border-radius: 6px;
+      padding: 10px 18px;
+      text-align: center;
+      min-width: 160px;
+    }
+    .cot-box .titulo-cot {
+      font-size: 15px;
+      font-weight: bold;
+      color: #1a3c6e;
+      letter-spacing: 1px;
+    }
+    .cot-box .numero-cot {
+      font-size: 18px;
+      font-weight: bold;
+      color: #222;
+      margin-top: 4px;
+    }
+    .cot-box .fecha-cot {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* Cliente */
+    .cliente-section {
+      background: #f7f9fc;
+      border: 1px solid #dde3ec;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+    .cliente-section h4 {
+      font-size: 12px;
+      color: #1a3c6e;
+      font-weight: bold;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cliente-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 20px;
+    }
+    .cliente-grid span { font-size: 11px; }
+    .cliente-grid .label { color: #888; }
+    .cliente-grid .valor { color: #222; font-weight: 600; }
+
+    /* Tabla ítems */
+    table.items {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+    }
+    table.items thead tr {
+      background: #1a3c6e;
+      color: #fff;
+    }
+    table.items thead th {
+      padding: 7px 8px;
+      font-size: 11px;
+      text-align: center;
+      font-weight: 600;
+    }
+    table.items tbody tr:nth-child(even) { background: #f5f8ff; }
+    table.items tbody td {
+      padding: 6px 8px;
+      font-size: 11px;
+      border-bottom: 1px solid #e0e7f0;
+    }
+    table.items tbody td.center { text-align: center; }
+    table.items tbody td.right { text-align: right; }
+
+    /* Totales */
+    .totales {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+    .totales-box {
+      width: 220px;
+      border: 1px solid #dde3ec;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .totales-box .fila-total {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 12px;
+      font-size: 12px;
+      border-bottom: 1px solid #eee;
+    }
+    .totales-box .fila-total:last-child {
+      background: #1a3c6e;
+      color: #fff;
+      font-weight: bold;
+      font-size: 13px;
+      border-bottom: none;
+    }
+
+    /* Observaciones */
+    .observaciones {
+      font-size: 11px;
+      color: #555;
+      border-top: 1px dashed #ccc;
+      padding-top: 10px;
+      margin-bottom: 20px;
+    }
+    .observaciones span { font-weight: bold; color: #333; }
+
+    /* Firma */
+    .firma {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 30px;
+    }
+    .firma-box {
+      text-align: center;
+      width: 180px;
+    }
+    .firma-box .linea { border-top: 1px solid #333; margin-bottom: 4px; }
+    .firma-box p { font-size: 10px; color: #555; }
+
+    .pie-pagina {
+      text-align: center;
+      font-size: 10px;
+      color: #aaa;
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+      padding-top: 8px;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .btn-imprimir, .btn-volver { display: none !important; }
+      .pagina-a4 {
+        box-shadow: none;
+        margin: 0;
+        padding: 12mm 15mm;
+        width: 100%;
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <button class="btn-imprimir" onclick="window.print()">🖨 Imprimir / Guardar PDF</button>
+  <a class="btn-volver" href="{% url 'cotizaciones' %}">← Volver al listado</a>
+
+  <div class="pagina-a4">
+
+    <!-- Encabezado -->
+    <div class="encabezado">
+      <div class="empresa-info">
+        {% if empresa.logo %}
+        <img src="/media/{{ empresa.logo }}" alt="Logo" style="height:48px;margin-bottom:6px;">
+        {% endif %}
+        <h2>{{ empresa.nombrecomercial|upper }}</h2>
+        <p>{{ empresa.razonsocial }}</p>
+        <p>RUC: {{ empresa.ruc }}</p>
+        <p>{{ empresa.direccion }}</p>
+        {% if empresa.telefono %}<p>Tel: {{ empresa.telefono }}</p>{% endif %}
+      </div>
+      <div class="cot-box">
+        <div class="titulo-cot">COTIZACIÓN</div>
+        <div class="numero-cot">COT-{{ cotizacion.idcotizacion|stringformat:"04d" }}</div>
+        <div class="fecha-cot">Fecha: {{ cotizacion.fecha|date:"d/m/Y" }}</div>
+      </div>
+    </div>
+
+    <!-- Cliente -->
+    <div class="cliente-section">
+      <h4>Datos del Cliente</h4>
+      <div class="cliente-grid">
+        <span class="label">Razón Social / Nombre:</span>
+        <span class="valor">{{ cotizacion.idcliente.razonsocial }}</span>
+        <span class="label">N° Documento:</span>
+        <span class="valor">{{ cotizacion.idcliente.numdoc }}</span>
+        {% if cotizacion.idcliente.direccion %}
+        <span class="label">Dirección:</span>
+        <span class="valor">{{ cotizacion.idcliente.direccion }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Ítems -->
+    <table class="items">
+      <thead>
+        <tr>
+          <th style="width:5%">#</th>
+          <th style="width:25%">Producto</th>
+          <th style="width:30%">Descripción</th>
+          <th style="width:10%">Cant.</th>
+          <th style="width:15%">P. Unitario</th>
+          <th style="width:15%">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in detalles %}
+        <tr>
+          <td class="center">{{ forloop.counter }}</td>
+          <td>{{ d.producto }}</td>
+          <td>{{ d.descripcion }}</td>
+          <td class="center">{{ d.cantidad|floatformat:2 }}</td>
+          <td class="right">S/. {{ d.preciounitario|floatformat:2 }}</td>
+          <td class="right">S/. {{ d.subtotal|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Totales -->
+    <div class="totales">
+      <div class="totales-box">
+        <div class="fila-total">
+          <span>Total</span>
+          <span>S/. {{ cotizacion.total|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Observaciones -->
+    {% if cotizacion.observaciones %}
+    <div class="observaciones">
+      <span>Observaciones: </span>{{ cotizacion.observaciones }}
+    </div>
+    {% endif %}
+
+    <!-- Firma -->
+    <div class="firma">
+      <div class="firma-box">
+        <div class="linea"></div>
+        <p>{{ empresa.razonsocial }}</p>
+        <p>RUC: {{ empresa.ruc }}</p>
+      </div>
+    </div>
+
+    <div class="pie-pagina">
+      Este documento es una cotización y no constituye comprobante de pago.
+    </div>
+
+  </div>
+</body>
+</html>

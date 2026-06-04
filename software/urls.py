@@ -18,6 +18,7 @@ from .views import transaccion
 from .views import proveedores
 from .views import registro
 from .views import registroValorizado
+from .views import cotizacion
 
 urlpatterns = [
     #login
@@ -135,6 +136,13 @@ urlpatterns = [
     path('registro-valorizado', registroValorizado.registro_valorizado, name='registro_valorizado'),
     path('registro-valorizado/excel', registroValorizado.export_valorizado_excel, name='registro_valorizado_excel'),
     path('registro-valorizado/pdf', registroValorizado.export_valorizado_pdf, name='registro_valorizado_pdf'),
+
+    # Cotizaciones
+    path('cotizaciones', cotizacion.cotizaciones, name='cotizaciones'),
+    path('cotizaciones/agregar', cotizacion.agregar, name='cotizacionAgregar'),
+    path('cotizaciones/guardar', cotizacion.guardar, name='cotizacionGuardar'),
+    path('cotizaciones/imprimir/<int:id>', cotizacion.imprimir, name='cotizacionImprimir'),
+    path('cotizaciones/eliminar/<int:id>', cotizacion.eliminar, name='cotizacionEliminar'),
 
     #TRANSACCIONES
     path('transacciones', transaccion.mostrar_Transaccion, name="MostrarTransaccion"),
