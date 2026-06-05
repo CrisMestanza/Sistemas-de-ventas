@@ -28,6 +28,7 @@ from software.models.detallecategoriaxunidadesModel import Detallecategoriaxunid
 from software.models.departamentosModel import Departamentos
 from software.models.codigocorreoModel import CodigoCorreo
 from software.models.clientesModel import Clientes
+from software.models.SucursalModel import Sucursal
 from django.db import connection
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -36,14 +37,22 @@ from openpyxl.utils import get_column_letter
 def usuarios(request):
     id2 = request.session.get('idtipousuario')
     if id2:
-
         permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id2)
-        usuarios = Usuario.objects.filter(estado=1)
+        es_superadmin = request.session.get('es_superadmin', False)
+        idsucursal = request.session.get('idsucursal')
+
+        if es_superadmin:
+            lista_usuarios = Usuario.objects.filter(estado=1)
+        else:
+            lista_usuarios = Usuario.objects.filter(estado=1, idsucursal=idsucursal)
+
         tipoUsuarios = Tipousuario.objects.filter(estado=1)
+        sucursales = Sucursal.objects.all()
         data = {
-            'usuarios': usuarios,
+            'usuarios': lista_usuarios,
             'tipoUsuarios': tipoUsuarios,
-            'permisos': permisos
+            'sucursales': sucursales,
+            'permisos': permisos,
         }
         return render(request, 'usuarios/usuarios.html', data)
     else:
@@ -64,11 +73,15 @@ def agregar(request):
             getTipoUsuario = get_object_or_404(
                 Tipousuario, idtipousuario=tipoUsuario)
 
+            idSucursal = request.POST.get('sucursalUsuario2')
+            getSucursal = Sucursal.objects.get(idsucursal=idSucursal) if idSucursal else None
+
             usuario = Usuario.objects.create(
                 nombrecompleto=nombreUsuario,
                 correo=correoUsuario,
                 contrasena=contrasenaUsuario,
                 idtipousuario=getTipoUsuario,
+                idsucursal=getSucursal,
                 celular=celularUsuario,
                 dni=dniUsuario,
                 estado=1
@@ -96,11 +109,15 @@ def editar(request):
             getTipoUsuario = get_object_or_404(
                 Tipousuario, idtipousuario=tipoUsuario)
 
+            idSucursal = request.POST.get('sucursalUsuario')
+            getSucursal = Sucursal.objects.get(idsucursal=idSucursal) if idSucursal else None
+
             usuario = get_object_or_404(Usuario, idusuario=idUsuario)
             usuario.nombrecompleto = nombreUsuario
             usuario.correo = correoUsuario
             usuario.contrasena = contrasenaUsuario
             usuario.idtipousuario = getTipoUsuario
+            usuario.idsucursal = getSucursal
             usuario.celular = celularUsuario
             usuario.dni = dniUsuario
             usuario.save()

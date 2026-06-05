@@ -51,27 +51,35 @@
                         <i class="fa-solid fa-trash fa-2xl" style="color: #f71b02;"></i>
                       </a>
                     </td>
-                     <!-- Modales de editar -->
-                     <div class="modal fade" id="myModal2{{permisos2.0.idtipousuario.idtipousuario}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                     <!-- Modal editar permisos -->
+                     <div class="modal fade" id="myModal2{{permisos2.0.idtipousuario.idtipousuario}}" tabindex="-1" role="dialog" aria-hidden="true">
                       <div class="modal-dialog" role="document">
                         <div class="modal-content">
                           <div class="modal-header">
-                            <h4 class="modal-title">Editar categoria</h4>
+                            <h4 class="modal-title">Editar permisos — {{ tipo_usuario }}</h4>
                             <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                               <span aria-hidden="true">&times;</span>
                             </button>
                           </div>
                           <div class="modal-body">
-                            <form id="formEditarCategoria {{permisos2.0.idtipousuario.idtipousuario}}" action="{% url 'editarCategorias' %}" method="post" enctype="multipart/form-data">
-                              <p>{{permisos2.0.idtipousuario.idtipousuario}}</p>
+                            <form action="{% url 'editarPermiso' %}" method="post">
                               {% csrf_token %}
-                              <div class="form-group">
-                                <label for="nombreProducto2"><strong>Nombre</strong></label>
-                                <input type="text" name="nameCategoria" value="{{ categorias_registro.nomcategoria }}" class="form-control">
-                                <input type="hidden" name="idCategoria" value="{{ categorias_registro.idcategoria }}">
-                              </div>
+                              <input type="hidden" name="tipoUsuario" value="{{ permisos2.0.idtipousuario.idtipousuario }}">
+                              <h6>Selecciona los módulos permitidos:</h6><br>
+                              {% for modulo in modulos %}
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox"
+                                    name="permisosTu[idmodulo][]"
+                                    value="{{ modulo.idmodulo }}"
+                                    id="mod_{{ permisos2.0.idtipousuario.idtipousuario }}_{{ modulo.idmodulo }}"
+                                    {% for p in permisos2 %}{% if p.idmodulo.idmodulo == modulo.idmodulo %}checked{% endif %}{% endfor %}>
+                                  <label class="form-check-label" for="mod_{{ permisos2.0.idtipousuario.idtipousuario }}_{{ modulo.idmodulo }}">
+                                    {{ modulo.nombremodulo }}
+                                  </label>
+                                </div>
+                              {% endfor %}
                               <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary btn-editar" data-id="{{ categorias_registro.idcategoria }}">Guardar</button>
+                                <button type="submit" class="btn btn-success">Guardar</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                               </div>
                             </form>
@@ -156,7 +164,15 @@
 </main><!-- End #main -->
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-
+  {% if request.GET.edited %}
+  Swal.fire({
+    title: '¡Permisos actualizados!',
+    text: 'Los permisos del tipo de usuario fueron guardados correctamente.',
+    icon: 'success',
+    confirmButtonText: 'OK'
+  });
+  {% endif %}
 </script>
 {% endblock %}

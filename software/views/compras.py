@@ -28,6 +28,7 @@ from software.models.detallecategoriaxunidadesModel import Detallecategoriaxunid
 from software.models.departamentosModel import Departamentos
 from software.models.codigocorreoModel import CodigoCorreo
 from software.models.clientesModel import Clientes
+from software.models.SucursalModel import Sucursal
 from django.db import connection
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -42,31 +43,28 @@ def compra(request):
 
     id2 = request.session.get('idtipousuario')
     if id2:
-
         permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id2)
-        resultados = Compras.objects.filter(estado=1).annotate(total=Sum('compradetalle__subtotal')).values(
-            'idcompra', 'idproveedor', 'fechacompra', 'numcorrelativo', 'idproveedor__razonsocial', 'total'
-        ).order_by(
-            'idcompra', 'idproveedor', 'fechacompra'
-        )
+        es_superadmin = request.session.get('es_superadmin', False)
+        idsucursal = request.session.get('idsucursal')
+        sucursal_filtro = request.GET.get('sucursal') if es_superadmin else None
+        sucursales = Sucursal.objects.all() if es_superadmin else []
 
-        # with connection.cursor() as cursor:
-        #     cursor.execute("""
-        #         SELECT `compras`.`idcompra`, `compras`.`idproveedor`, `compras`.`fechacompra`, `compras`.`numcorrelativo`, `proveedores`.`razonsocial`,
-        #         SUM(`compra_detalle`.`subtotal`) AS `total`
-        #         FROM `compras`
-        #         LEFT OUTER JOIN `compra_detalle` ON (`compras`.`idcompra` = `compra_detalle`.`idcompra`)
-        #         INNER JOIN `proveedores` ON (`compras`.`idproveedor` = `proveedores`.`idproveedor`)
-        #         WHERE `compras`.`estado` = 1
-        #         GROUP BY `compras`.`idcompra`, `compras`.`idproveedor`, `compras`.`numcorrelativo`, `compras`.`fechacompra`, `compras`.`estado`,
-        #         `proveedores`.`razonsocial`
-        #         ORDER BY `compras`.`idcompra` ASC, `compras`.`idproveedor` ASC, `compras`.`fechacompra` ASC;
-        #     """)
-        #     rows = cursor.fetchall()
+        qs = Compras.objects.filter(estado=1)
+        if es_superadmin and sucursal_filtro:
+            qs = qs.filter(idsucursal=sucursal_filtro)
+        elif not es_superadmin:
+            qs = qs.filter(idsucursal=idsucursal)
+
+        resultados = qs.annotate(total=Sum('compradetalle__subtotal')).values(
+            'idcompra', 'idproveedor', 'fechacompra', 'numcorrelativo',
+            'idproveedor__razonsocial', 'total', 'idsucursal__nombre_sucursal'
+        ).order_by('idcompra', 'idproveedor', 'fechacompra')
 
         data = {
             'resultados': resultados,
-            'permisos': permisos
+            'permisos': permisos,
+            'sucursales': sucursales,
+            'sucursal_filtro': sucursal_filtro or '',
         }
 
         return render(request, 'compras/compras.html', data)
@@ -89,9 +87,11 @@ def agregar(request):
         permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id2)
         proveedores = Proveedores.objects.all()
         categorias = Categoria.objects.all()
+        unidades = Unidades.objects.filter(estado=1)
         data = {
             'proveedores': proveedores,
             'categorias': categorias,
+            'unidades': unidades,
             'permisos': permisos
         }
         return render(request, 'compras/agregarCompras.html', data)
@@ -122,8 +122,10 @@ def guardar(request):
         fechacompra = request.POST.get('fechDocumento')
 
         # Crear una instancia de CompraModel y guardar la compra
+        idsucursal = request.session.get('idsucursal')
+        sucursal = Sucursal.objects.filter(idsucursal=idsucursal).first() if idsucursal else None
         compra = Compras.objects.create(
-            numcorrelativo=numcorrelativo, idproveedor=proveedor, fechacompra=fechacompra, estado=1)
+            numcorrelativo=numcorrelativo, idproveedor=proveedor, fechacompra=fechacompra, estado=1, idsucursal=sucursal)
 
         # Obtener el ID de la compra recién creada
         id_insertado = compra.pk

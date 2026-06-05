@@ -35,11 +35,37 @@
                                 </div>
 
 
-                                <div data-mdb-input-init class="form-outline mb-4">
-                                    <input type="text" id="loginName" value="{{total}}" readonly class="form-control" name="monto" />
+                                <table class="table table-sm mb-3" style="max-width:400px; margin:auto;">
+                                  <tr>
+                                    <td>Monto apertura</td>
+                                    <td class="text-end">S/ {{ monto_inicial|floatformat:2 }}</td>
+                                  </tr>
+                                  <tr class="text-success">
+                                    <td>Ventas del día</td>
+                                    <td class="text-end">+ S/ {{ ventas_hoy|floatformat:2 }}</td>
+                                  </tr>
+                                  {% if ingresos_manuales %}
+                                  <tr class="text-success">
+                                    <td>Ingresos manuales</td>
+                                    <td class="text-end">+ S/ {{ ingresos_manuales|floatformat:2 }}</td>
+                                  </tr>
+                                  {% endif %}
+                                  {% if egresos_manuales %}
+                                  <tr class="text-danger">
+                                    <td>Egresos manuales</td>
+                                    <td class="text-end">- S/ {{ egresos_manuales|floatformat:2 }}</td>
+                                  </tr>
+                                  {% endif %}
+                                  <tr class="fw-bold border-top">
+                                    <td>TOTAL</td>
+                                    <td class="text-end">S/ {{ total|floatformat:2 }}</td>
+                                  </tr>
+                                </table>
+
+                                <div class="form-outline mb-4" style="max-width:400px; margin:auto;">
+                                    <input type="text" id="loginName" value="{{ total|floatformat:2 }}" readonly class="form-control" name="monto" />
                                     <label class="form-label" for="loginName">Monto final</label>
                                 </div>
-
 
                                 <button type="button" class="btn btn-primary" id="agregar">Cerrar caja</button>
 

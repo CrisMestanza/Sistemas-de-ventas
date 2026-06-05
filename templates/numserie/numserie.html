@@ -26,7 +26,7 @@
                     <th scope="col">CODIGO</th>
                     <th scope="col">Número de serie</th>
                     <th scope="col">Tipo documento</th>
-                    <th scope="col">Empledo</th>
+                    <th scope="col">Sucursal</th>
                     <th scope="col">Acciones</th>
                   </tr>
                 </thead>
@@ -36,7 +36,7 @@
                     <td>{{ forloop.counter }}</td>
                     <td>{{ numserie.numserie }}</td>
                     <td>{{ numserie.idtipodocumento.nombredocumento }}</td>
-                    <td>{{ numserie.idusuario.nombrecompleto }}</td>
+                    <td>{{ numserie.idsucursal.nombre_sucursal }}</td>
                     <td>
                       <a type="button" id="btnEditar" class="btn" data-bs-toggle="modal" data-bs-target="#myModal2{{ numserie.idnumserie }}">
                         <i class="fa-solid fa-pen-to-square fa-2xl" style="color: #005eff;"></i>
@@ -71,12 +71,12 @@
                                     <option value="{{documento.idtipodocumento}}">{{documento.nombredocumento}}</option>
                                   {% endfor %}
                                 </select><br>
-                                <label  for="nombreTipo">Empleado a usar serie</label><br>
+                                <label for="nombreTipo">Sucursal</label><br>
 
-                                <select name="usuario2" id="usuario2" class="form-control">
-                                  <option value="{{numserie.idusuario}}">{{numserie.idusuario.nombrecompleto}}</option>
-                                  {% for usuario in usuarios %}
-                                    <option value="{{usuario.idusuario}}">{{usuario.nombrecompleto}}</option>
+                                <select name="sucursal2" id="sucursal2" class="form-control">
+                                  <option value="{{numserie.idsucursal.idsucursal}}">{{numserie.idsucursal.nombre_sucursal}}</option>
+                                  {% for sucursal in sucursales %}
+                                    <option value="{{sucursal.idsucursal}}">{{sucursal.nombre_sucursal}}</option>
                                   {% endfor %}
                                 </select>
 
@@ -128,10 +128,10 @@
                         {% endfor %}
                       </select><br>
 
-                      <label for="nombreTipo">Empleado a usar serie</label><br>
-                      <select name="usuario" id="usuario" class="form-control">
-                        {% for usuario in usuarios %}
-                        <option value="{{usuario.idusuario}}">{{usuario.nombrecompleto}}</option>
+                      <label for="nombreTipo">Sucursal</label><br>
+                      <select name="sucursal" id="sucursal" class="form-control">
+                        {% for sucursal in sucursales %}
+                        <option value="{{sucursal.idsucursal}}">{{sucursal.nombre_sucursal}}</option>
                         {% endfor %}
                       </select>
                       

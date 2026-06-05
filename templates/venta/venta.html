@@ -29,6 +29,23 @@
             <a type="submit" id="btnExportarExcel" class="btn btn-primary" href="{% url 'export_to_excel_ventas' %}">
               Exportar todo los datos a excel 
             </a>
+            {% if request.session.es_superadmin %}
+            <form method="get" action="" class="d-flex align-items-center gap-2 mb-3 mt-2">
+              <label class="mb-0 fw-bold">Sucursal:</label>
+              <select name="sucursal" class="form-select" style="width:200px;">
+                <option value="">-- Todas --</option>
+                {% for s in sucursales %}
+                  <option value="{{ s.idsucursal }}" {% if sucursal_filtro == s.idsucursal|stringformat:"s" %}selected{% endif %}>
+                    {{ s.nombre_sucursal }}
+                  </option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-dark">Filtrar</button>
+              {% if sucursal_filtro %}
+                <a href="/ventas" class="btn btn-outline-secondary">Limpiar</a>
+              {% endif %}
+            </form>
+            {% endif %}
             <h3><strong>Buscar entre fechas: </strong></h3>
             <div class="d-flex align-items-center">
               <div class="me-2">
@@ -44,6 +61,7 @@
                     <tr>
                         <th scope="col">Venta</th>
                         <th scope="col">Cliente</th>
+                        <th scope="col">Sucursal</th>
                         <th scope="col">Total</th>
                         <th scope="col">Fecha</th>
                         <th scope="col">Doc</th>
@@ -65,9 +83,10 @@
                         <tr>
 
                             <td>{{ forloop.counter }}</td>
-                            <td>{{ resultado.1 }}</td> <!-- Accediendo al segundo elemento de la tupla para razonsocial -->
-                            <td>{{ resultado.2|floatformat:2 }}</td><!-- Accediendo al tercer elemento de la tupla para total -->
-                            <td>{{ resultado.3}}</td> <!-- Accediendo al cuarto elemento de la tupla para fechaemision -->
+                            <td>{{ resultado.1 }}</td>
+                            <td>{{ resultado.11|default:"-" }}</td>
+                            <td>{{ resultado.2|floatformat:2 }}</td>
+                            <td>{{ resultado.3}}</td>
                             <td>{{ resultado.4 }}-{{ resultado.5 }}</td>
                             <td>
                               <button type="button" class="btn btn-primary btn-sm ver-detalle-venta"

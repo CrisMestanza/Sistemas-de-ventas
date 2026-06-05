@@ -36,36 +36,54 @@ from software.models.cajaModel import Caja
 from software.models.transaccionModel import Transaccion
 from software.models.tipoTransaccion import TipoTransaccion
 from django.utils import timezone
+from django.db.models import Sum
 
 def cerrarcaja(request):
-    #Esto siempre va
     id2 = request.session.get('idtipousuario')
     if id2:
         permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id2)
-        
-        # Obtener la fecha y hora actual en el huso horario de Lima (Perú)
         ahora = timezone.localtime(timezone.now())
+        idusuario_sesion = request.session.get('idusuario')
+        idsucursal = request.session.get('idsucursal')
 
-        transacciones = Transaccion.objects.filter(fecha = ahora.date())
-        
-        suma = 0
-        resta = 0
-        for transaccion in transacciones:
-            estado = transaccion.id_tipo_transaccion.ingresoegreso
-            
-            if estado == 1:
-                suma += transaccion.monto
-            elif estado == 0:
-                resta += transaccion.monto
-        total = suma-resta
-        
+        caja_actual = Caja.objects.filter(
+            usuario_apertura=idusuario_sesion, estado=1
+        ).order_by('-id_caja').first()
+
+        monto_inicial = Decimal(str(caja_actual.monto_inicial)) if caja_actual else Decimal('0')
+
+        # Ventas del día de esta sucursal
+        ventas_hoy = Venta.objects.filter(
+            estado=1,
+            fechaemision=ahora.date(),
+            idnumserie__idsucursal=idsucursal
+        ).aggregate(total=Sum('total_a_pagar'))['total'] or Decimal('0')
+
+        # Transacciones manuales (no ventas) de la caja actual
+        ingresos_manuales = Decimal('0')
+        egresos_manuales = Decimal('0')
+        if caja_actual:
+            trans_manuales = Transaccion.objects.filter(
+                id_caja=caja_actual
+            ).exclude(id_tipo_transaccion=1)
+            for t in trans_manuales:
+                if t.id_tipo_transaccion.ingresoegreso == 1:
+                    ingresos_manuales += Decimal(str(t.monto))
+                else:
+                    egresos_manuales += Decimal(str(t.monto))
+
+        total = monto_inicial + Decimal(str(ventas_hoy)) + ingresos_manuales - egresos_manuales
+
         data = {
-
-            "permisos":permisos, #Esto se envía para mostrar los permisos
-            "total":total
+            'permisos': permisos,
+            'total': total,
+            'monto_inicial': monto_inicial,
+            'ventas_hoy': ventas_hoy,
+            'ingresos_manuales': ingresos_manuales,
+            'egresos_manuales': egresos_manuales,
         }
-        
-        return render(request, 'caja/cerrarCaja.html',data)
+
+        return render(request, 'caja/cerrarCaja.html', data)
     else:
         return HttpResponse("<h1>No tiene acceso señor</h1>")
     

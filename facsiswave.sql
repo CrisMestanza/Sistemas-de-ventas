@@ -207,7 +207,7 @@ CREATE TABLE `caja` (
   KEY `fk-Usuario_cierre_idx` (`usuario_cierre`),
   CONSTRAINT `fk_usaurio_apertura` FOREIGN KEY (`usuario_apertura`) REFERENCES `usuario` (`idusuario`),
   CONSTRAINT `fk_usuario_cierre` FOREIGN KEY (`usuario_cierre`) REFERENCES `usuario` (`idusuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -216,6 +216,7 @@ CREATE TABLE `caja` (
 
 LOCK TABLES `caja` WRITE;
 /*!40000 ALTER TABLE `caja` DISABLE KEYS */;
+INSERT INTO `caja` VALUES (24,'2026-05-29','16:51:26',NULL,NULL,10.00,NULL,1,2,NULL);
 /*!40000 ALTER TABLE `caja` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -231,7 +232,7 @@ CREATE TABLE `categoria` (
   `nomcategoria` varchar(255) NOT NULL,
   `estado` int NOT NULL DEFAULT '1',
   PRIMARY KEY (`idcategoria`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -240,6 +241,7 @@ CREATE TABLE `categoria` (
 
 LOCK TABLES `categoria` WRITE;
 /*!40000 ALTER TABLE `categoria` DISABLE KEYS */;
+INSERT INTO `categoria` VALUES (27,'Lacteos',1),(28,'Bebidas',1);
 /*!40000 ALTER TABLE `categoria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -262,7 +264,7 @@ CREATE TABLE `clientes` (
   KEY `idtipocliente` (`idtipocliente`),
   KEY `fk_tipo_entidad_idx` (`id_tipo_entidad`),
   CONSTRAINT `fk_tipo_entidad` FOREIGN KEY (`id_tipo_entidad`) REFERENCES `tipo_entidad` (`id_tipo_entidad`)
-) ENGINE=InnoDB AUTO_INCREMENT=220 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=232 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -271,6 +273,7 @@ CREATE TABLE `clientes` (
 
 LOCK TABLES `clientes` WRITE;
 /*!40000 ALTER TABLE `clientes` DISABLE KEYS */;
+INSERT INTO `clientes` VALUES (220,2,'72655883','CRISTIAN MESTANZA ORTIZ','-',1,1),(221,2,'-','CLiente varios','-',1,1),(222,2,'-','CLiente varios','-',1,1),(223,2,'-','CLiente varios','-',1,1),(224,2,'72655883','CRISTIAN MESTANZA ORTIZ','-',1,1),(225,2,'72655883','CRISTIAN MESTANZA ORTIZ','-',1,1),(226,2,'72655883','CRISTIAN MESTANZA ORTIZ','-',1,1),(227,1,'-','CLiente varios','-',1,2),(228,2,'-','CLiente varios','-',1,1),(229,2,'-','CLiente varios','-',1,1),(230,2,'-','CLiente varios','-',1,1),(231,2,'-','CLiente varios','-',1,1);
 /*!40000 ALTER TABLE `clientes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -317,7 +320,7 @@ CREATE TABLE `compra_detalle` (
   KEY `fk_compra_compra_detalle` (`idcompra`),
   CONSTRAINT `fk_compra_compra_detalle` FOREIGN KEY (`idcompra`) REFERENCES `compras` (`idcompra`),
   CONSTRAINT `fk_producto_compra_detalle` FOREIGN KEY (`idproducto`) REFERENCES `producto` (`idproducto`)
-) ENGINE=InnoDB AUTO_INCREMENT=158 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=166 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -326,6 +329,7 @@ CREATE TABLE `compra_detalle` (
 
 LOCK TABLES `compra_detalle` WRITE;
 /*!40000 ALTER TABLE `compra_detalle` DISABLE KEYS */;
+INSERT INTO `compra_detalle` VALUES (158,471,368,2,6),(159,472,369,2,4),(160,473,369,2,4),(161,473,368,3,9),(162,474,369,2,4),(163,475,369,3,6),(164,476,370,1,2),(165,477,371,3,6);
 /*!40000 ALTER TABLE `compra_detalle` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -342,10 +346,13 @@ CREATE TABLE `compras` (
   `numcorrelativo` varchar(50) DEFAULT NULL,
   `fechacompra` date DEFAULT NULL,
   `estado` int DEFAULT '1',
+  `idsucursal` int DEFAULT NULL,
   PRIMARY KEY (`idcompra`),
   KEY `fk_compra_proveedores` (`idproveedor`),
-  CONSTRAINT `fk_compra_proveedores` FOREIGN KEY (`idproveedor`) REFERENCES `proveedores` (`idproveedor`)
-) ENGINE=InnoDB AUTO_INCREMENT=471 DEFAULT CHARSET=latin1;
+  KEY `fk_compras_sucursal_idx` (`idsucursal`),
+  CONSTRAINT `fk_compra_proveedores` FOREIGN KEY (`idproveedor`) REFERENCES `proveedores` (`idproveedor`),
+  CONSTRAINT `fk_compras_sucursal` FOREIGN KEY (`idsucursal`) REFERENCES `sucursal` (`idsucursal`)
+) ENGINE=InnoDB AUTO_INCREMENT=478 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -354,7 +361,99 @@ CREATE TABLE `compras` (
 
 LOCK TABLES `compras` WRITE;
 /*!40000 ALTER TABLE `compras` DISABLE KEYS */;
+INSERT INTO `compras` VALUES (471,4,'B001-0001','2026-05-29',0,NULL),(472,4,'F001-0001','2026-05-29',0,NULL),(473,4,'F001-0001','2026-05-29',1,NULL),(474,4,'F0002-0001','2026-05-29',1,NULL),(475,4,'B001-003','2026-05-30',1,NULL),(476,4,'B004-001','2026-06-04',1,2),(477,4,'B002 - 005','2026-06-04',1,1);
 /*!40000 ALTER TABLE `compras` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `cotizacion`
+--
+
+DROP TABLE IF EXISTS `cotizacion`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `cotizacion` (
+  `idcotizacion` int NOT NULL AUTO_INCREMENT,
+  `idcliente` int NOT NULL,
+  `fecha` date NOT NULL,
+  `total` double DEFAULT '0',
+  `observaciones` varchar(500) DEFAULT NULL,
+  `estado` int DEFAULT '1',
+  PRIMARY KEY (`idcotizacion`),
+  KEY `idcliente` (`idcliente`),
+  CONSTRAINT `cotizacion_ibfk_1` FOREIGN KEY (`idcliente`) REFERENCES `clientes` (`idcliente`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cotizacion`
+--
+
+LOCK TABLES `cotizacion` WRITE;
+/*!40000 ALTER TABLE `cotizacion` DISABLE KEYS */;
+INSERT INTO `cotizacion` VALUES (1,220,'2026-06-03',14,'',1);
+/*!40000 ALTER TABLE `cotizacion` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `cotizacion_detalle`
+--
+
+DROP TABLE IF EXISTS `cotizacion_detalle`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `cotizacion_detalle` (
+  `idcotizaciondetalle` int NOT NULL AUTO_INCREMENT,
+  `idcotizacion` int NOT NULL,
+  `producto` varchar(255) NOT NULL,
+  `descripcion` varchar(500) DEFAULT NULL,
+  `cantidad` double NOT NULL,
+  `preciounitario` double NOT NULL,
+  `subtotal` double NOT NULL,
+  PRIMARY KEY (`idcotizaciondetalle`),
+  KEY `idcotizacion` (`idcotizacion`),
+  CONSTRAINT `cotizacion_detalle_ibfk_1` FOREIGN KEY (`idcotizacion`) REFERENCES `cotizacion` (`idcotizacion`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cotizacion_detalle`
+--
+
+LOCK TABLES `cotizacion_detalle` WRITE;
+/*!40000 ALTER TABLE `cotizacion_detalle` DISABLE KEYS */;
+INSERT INTO `cotizacion_detalle` VALUES (1,1,'Yogur','',4,2,8),(2,1,'Gaseosa','',3,2,6);
+/*!40000 ALTER TABLE `cotizacion_detalle` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `cuenta_bancaria`
+--
+
+DROP TABLE IF EXISTS `cuenta_bancaria`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `cuenta_bancaria` (
+  `idcuentabancaria` int NOT NULL AUTO_INCREMENT,
+  `idcliente` int NOT NULL,
+  `banco` varchar(50) NOT NULL,
+  `numero_cuenta` varchar(50) NOT NULL,
+  `tipo_cuenta` varchar(20) DEFAULT 'Ahorro',
+  `estado` int DEFAULT '1',
+  PRIMARY KEY (`idcuentabancaria`),
+  KEY `idcliente` (`idcliente`),
+  CONSTRAINT `cuenta_bancaria_ibfk_1` FOREIGN KEY (`idcliente`) REFERENCES `clientes` (`idcliente`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cuenta_bancaria`
+--
+
+LOCK TABLES `cuenta_bancaria` WRITE;
+/*!40000 ALTER TABLE `cuenta_bancaria` DISABLE KEYS */;
+INSERT INTO `cuenta_bancaria` VALUES (1,220,'BCP','123123','Corriente',1);
+/*!40000 ALTER TABLE `cuenta_bancaria` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -450,7 +549,7 @@ CREATE TABLE `detalletipousuarioxmodulos` (
   KEY `idtipousuario` (`idtipousuario`),
   CONSTRAINT `detalletipousuarioxmodulos_ibfk_1` FOREIGN KEY (`idmodulo`) REFERENCES `modulos` (`idmodulo`),
   CONSTRAINT `detalletipousuarioxmodulos_ibfk_2` FOREIGN KEY (`idtipousuario`) REFERENCES `tipousuario` (`idtipousuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=90 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -459,7 +558,7 @@ CREATE TABLE `detalletipousuarioxmodulos` (
 
 LOCK TABLES `detalletipousuarioxmodulos` WRITE;
 /*!40000 ALTER TABLE `detalletipousuarioxmodulos` DISABLE KEYS */;
-INSERT INTO `detalletipousuarioxmodulos` VALUES (1,1,1),(2,1,2),(3,1,3),(5,1,5),(6,1,6),(7,1,7),(8,1,8),(11,1,12),(12,2,2),(13,2,3),(14,2,5),(15,2,6),(19,1,13),(20,1,14),(21,1,15),(22,3,7),(23,3,8),(24,3,12),(25,1,16),(26,10,1),(27,10,2),(28,10,16),(29,1,17),(30,1,18),(31,1,19),(32,2,19),(33,10,19);
+INSERT INTO `detalletipousuarioxmodulos` VALUES (1,1,1),(2,1,2),(3,1,3),(5,1,5),(6,1,6),(7,1,7),(8,1,8),(11,1,12),(19,1,13),(20,1,14),(21,1,15),(25,1,16),(26,10,1),(27,10,2),(28,10,16),(29,1,17),(30,1,18),(31,1,19),(33,10,19),(74,3,7),(75,3,8),(76,3,12),(77,3,13),(78,3,20),(79,2,1),(80,2,2),(81,2,3),(82,2,5),(83,2,6),(84,2,7),(85,2,16),(86,2,17),(87,2,18),(88,2,19),(89,2,23);
 /*!40000 ALTER TABLE `detalletipousuarioxmodulos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -600,7 +699,7 @@ CREATE TABLE `django_session` (
 
 LOCK TABLES `django_session` WRITE;
 /*!40000 ALTER TABLE `django_session` DISABLE KEYS */;
-INSERT INTO `django_session` VALUES ('07kd63rg3c0dx5zdel5c1k3ne49bmdsn','eyJpZHRpcG91c3VhcmlvIjoxfQ:1sQY8q:hd3WiSYvzx3JWT_VwKEWZ4BRnNniiBlGTgePZFhv9jA','2024-07-21 20:05:48.895633'),('3b7lvpri26chlhg2eyh9o5y5d5n9m6fb','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1wAb6A:u98mTF4sU45JKzmxuPI_A6GZ4_GACijHXmFkRWBsrkw','2026-04-22 22:10:10.736337'),('4muylhhtdx1ahxm1kiqgur6uz37yfzuj','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1wEyA4:BE6AEzmY2GRdFeDEIKiiCJpjCbfQmPEF2Rk_Qdgs950','2026-05-04 23:36:16.824212'),('8dbt99r1b41p6n3a9chcr86m2x565yqm','.eJw9y80KgkAQAOBXkTl7aA0SOirhJRGEljrJrG41_uza7lhi9e556vrB9wZqmEY7-QkdWdiLEIwdlNO1HcZe80qQOvJMaIJce0azYFA4pgXCNf9jFAKOVLHttFmP2Hz8ZJArpRmr7HLblYlsh1NJ56yY5ZPUIafexMmrOT7quksTSfNdXCPUsdrC9weQsTZB:1wABYG:9C9OwbO53rby8P-5-Rrq6IpPn-O_-ABbj_eHLrOqwUM','2026-04-21 18:53:28.800643'),('qwbpi7us8l808ie4u3koiusmyz6opqi0','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1wGgg1:qEcNAhQz3uqyoOWtRkj0v8xlpHTXfbZX03MkALlGbCg','2026-05-09 17:20:21.648136'),('rbodetcet1xb9v7i4ssfnwglm3ogtrxn','.eJw9y7EOgjAQANBfITcziFEQNwMrkcS4sJDD1ngBerW9YlL132Vyfcl7Aykhy8EHdMRwzFIwPA9O33i2k5aVoHLkhdAkjfaCJmJydkIR0jX_4zYFtNQLj9qsp_j4YFD6QQv2fLCndnk53da4VM-uDOq6m9jFsuqaPN7nYiM1PS6q2GdZPij4_gBuETXU:1w9QFd:qyCyGijJa3MsE8lWi5rZ4TVD2F4IqOvRvNOLbwv2a-M','2026-04-19 16:23:05.537941'),('u1fo7f4w8q6xjqjsqqlltkyhvjl86v1a','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1wEDzc:OqgTk68AzdnK03-iyymcfeUYm3UQhea5Tqik38OSG_g','2026-05-02 22:18:24.680932'),('v7u2v9sw4cez2xz733jqgzexh8wg4xb8','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1sSBdP:v1ZjVgqWLRhbl6veUnqmUo_0DTHCrnTr7H42r3jueeg','2024-07-26 08:28:07.567588');
+INSERT INTO `django_session` VALUES ('07kd63rg3c0dx5zdel5c1k3ne49bmdsn','eyJpZHRpcG91c3VhcmlvIjoxfQ:1sQY8q:hd3WiSYvzx3JWT_VwKEWZ4BRnNniiBlGTgePZFhv9jA','2024-07-21 20:05:48.895633'),('3b7lvpri26chlhg2eyh9o5y5d5n9m6fb','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1wAb6A:u98mTF4sU45JKzmxuPI_A6GZ4_GACijHXmFkRWBsrkw','2026-04-22 22:10:10.736337'),('4muylhhtdx1ahxm1kiqgur6uz37yfzuj','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1wEyA4:BE6AEzmY2GRdFeDEIKiiCJpjCbfQmPEF2Rk_Qdgs950','2026-05-04 23:36:16.824212'),('8dbt99r1b41p6n3a9chcr86m2x565yqm','.eJw9y80KgkAQAOBXkTl7aA0SOirhJRGEljrJrG41_uza7lhi9e556vrB9wZqmEY7-QkdWdiLEIwdlNO1HcZe80qQOvJMaIJce0azYFA4pgXCNf9jFAKOVLHttFmP2Hz8ZJArpRmr7HLblYlsh1NJ56yY5ZPUIafexMmrOT7quksTSfNdXCPUsdrC9weQsTZB:1wABYG:9C9OwbO53rby8P-5-Rrq6IpPn-O_-ABbj_eHLrOqwUM','2026-04-21 18:53:28.800643'),('chdw5n7j97geinghfmiqrkgtkugoxr6y','.eJw9jDkOgDAMwL6CMneBkZUZ8QQUSoZI9FCOpYi_UxZGW7Jv4NO4FldH4QLzOAbIJR1CsaR6kXUHi7AaYx5WUsPccNjEuEHo9V9OH6lHF8WrjwKQ7uqVBM_EGWYTp-cFE1Uoug:1wVAf4:mHvFnyMzNeDD4pDl75woSqtRlwdHKgVfbjnR5cf3wAs','2026-06-18 16:11:14.316006'),('dbb65mohrbe83plga1tfkybve0on4v29','.eJxFizsKgDAMQK8imTuJUy_g6g0kthEC_ZE0k3h3q4vje7x3AcfOrZoaClfws4NS8yEUam6J-lCwMpZpYxJwI__T5UW1YKKYvpV0V2skGDMX8CcmpfsB_mUjYQ:1wV8f9:ahHf0UJ1zwaj1NfiyFE8_l_FqL3Hi-siYsACVVF1vv8','2026-06-18 14:03:11.282748'),('i3uwg7ze2ck6o8mc3hjqprmz0nla5vfv','.eJw9jDkOgDAMwL6CMneBkZUZ8QQUSoZI9FCOpYi_UxZGW7Jv4NO4FldH4QLzOAbIJR1CsaR6kXUHi7AaYx5WUsPccNjEuEHo9V9OH6lHF8WrjwKQ7uqVBM_EGWYTp-cFE1Uoug:1wVKRe:9KMMu10-Sky7ftaApXeGQ2khwaSE3FLxNfR_NSuLD3I','2026-06-19 02:38:02.363248'),('qwbpi7us8l808ie4u3koiusmyz6opqi0','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1wGgg1:qEcNAhQz3uqyoOWtRkj0v8xlpHTXfbZX03MkALlGbCg','2026-05-09 17:20:21.648136'),('rbodetcet1xb9v7i4ssfnwglm3ogtrxn','.eJw9y7EOgjAQANBfITcziFEQNwMrkcS4sJDD1ngBerW9YlL132Vyfcl7Aykhy8EHdMRwzFIwPA9O33i2k5aVoHLkhdAkjfaCJmJydkIR0jX_4zYFtNQLj9qsp_j4YFD6QQv2fLCndnk53da4VM-uDOq6m9jFsuqaPN7nYiM1PS6q2GdZPij4_gBuETXU:1w9QFd:qyCyGijJa3MsE8lWi5rZ4TVD2F4IqOvRvNOLbwv2a-M','2026-04-19 16:23:05.537941'),('u1fo7f4w8q6xjqjsqqlltkyhvjl86v1a','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1wEDzc:OqgTk68AzdnK03-iyymcfeUYm3UQhea5Tqik38OSG_g','2026-05-02 22:18:24.680932'),('v7u2v9sw4cez2xz733jqgzexh8wg4xb8','eyJpZHRpcG91c3VhcmlvIjoxLCJub21icmVjb21wbGV0byI6IkNyaXN0aWFuIE1lc3RhbnphIE9ydGl6IiwiaWR1c3VhcmlvIjoyfQ:1sSBdP:v1ZjVgqWLRhbl6veUnqmUo_0DTHCrnTr7H42r3jueeg','2024-07-26 08:28:07.567588');
 /*!40000 ALTER TABLE `django_session` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -667,7 +766,7 @@ CREATE TABLE `empresa` (
 
 LOCK TABLES `empresa` WRITE;
 /*!40000 ALTER TABLE `empresa` DISABLE KEYS */;
-INSERT INTO `empresa` VALUES (1,'20615469751','Inversiones Peralta y Asociados SAC','Innovación Tecnológica','Jr. Augusto B. Leguia 484',1,'1712247597_07e00037483e6b78fc97.png','9167626762','PERA2015','Pera2015','220901',NULL,'220901');
+INSERT INTO `empresa` VALUES (1,'20615469751','Inversiones Peralta y Asociados SAC','Innovación Tecnológica','Jr. Augusto B. Leguia 484',1,'logos/logo_1.png','9167626762','PERA2015','Pera2015','220901',NULL,'220901');
 /*!40000 ALTER TABLE `empresa` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -691,7 +790,7 @@ CREATE TABLE `lotes` (
   KEY `idproducto` (`idproducto`),
   CONSTRAINT `lotes_ibfk_1` FOREIGN KEY (`idcompradetalle`) REFERENCES `compra_detalle` (`idcompradetalle`),
   CONSTRAINT `lotes_ibfk_2` FOREIGN KEY (`idproducto`) REFERENCES `producto` (`idproducto`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -700,6 +799,7 @@ CREATE TABLE `lotes` (
 
 LOCK TABLES `lotes` WRITE;
 /*!40000 ALTER TABLE `lotes` DISABLE KEYS */;
+INSERT INTO `lotes` VALUES (16,158,368,'1','2026-05-12','2026-06-06',2),(17,159,369,'2','2026-05-05','2026-06-06',2),(18,160,369,'1','2026-04-28','2026-06-06',2),(19,161,368,'2','2026-04-27','2026-06-05',3),(20,162,369,'1','2026-04-27','2026-06-06',2),(21,163,369,'00','2026-05-30','2026-05-30',3),(22,164,370,'11','2026-06-04','2026-06-11',1),(23,165,371,'222','2026-06-04','2026-06-11',3);
 /*!40000 ALTER TABLE `lotes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -741,7 +841,7 @@ CREATE TABLE `modulos` (
   `url` varchar(45) DEFAULT NULL,
   `logo` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`idmodulo`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -750,7 +850,7 @@ CREATE TABLE `modulos` (
 
 LOCK TABLES `modulos` WRITE;
 /*!40000 ALTER TABLE `modulos` DISABLE KEYS */;
-INSERT INTO `modulos` VALUES (1,'Ventas',1,'/ventas','bi bi-cart'),(2,'Compras',1,'/compras','bi bi-bag'),(3,'Productos',1,'/productos','bi bi-basket3'),(5,'Usuarios',1,'/usuarios','bi bi-people'),(6,'Configuración',1,'/configuracion','bi bi-gear'),(7,'Unidades',1,'/unidades','bi bi-unity'),(8,'Permisos',1,'/permisos','bi bi-people'),(12,'Categorias',1,'/categorias','bi bi-bookmarks'),(13,'Cpanel',1,'/cpanel','fa-solid fa-chart-simple'),(14,'Tipo usuarios',1,'/tipousuarios','bi bi-people'),(15,'Número de seire',1,'/numeroserie','fas fa-list-ol'),(16,'Cerrar caja',1,'/cerrarcaja','fas fa-cash-register'),(17,'Ver caja',1,'/cajas','fas fa-cash-register'),(18,'Transacciones',1,'/transacciones','fas fa-credit-card'),(19,'Proveedores',1,'/proveedores','bi bi-truck');
+INSERT INTO `modulos` VALUES (1,'Ventas',1,'/ventas','bi bi-cart'),(2,'Compras',1,'/compras','bi bi-bag'),(3,'Productos',1,'/productos','bi bi-basket3'),(5,'Usuarios',1,'/usuarios','bi bi-people'),(6,'Configuración',1,'/configuracion','bi bi-gear'),(7,'Unidades',1,'/unidades','bi bi-unity'),(8,'Permisos',1,'/permisos','bi bi-people'),(12,'Categorias',1,'/categorias','bi bi-bookmarks'),(13,'Cpanel',1,'/cpanel','fa-solid fa-chart-simple'),(14,'Tipo usuarios',1,'/tipousuarios','bi bi-people'),(15,'Número de seire',1,'/numeroserie','fas fa-list-ol'),(16,'Cerrar caja',1,'/cerrarcaja','fas fa-cash-register'),(17,'Ver caja',1,'/cajas','fas fa-cash-register'),(18,'Transacciones',1,'/transacciones','fas fa-credit-card'),(19,'Proveedores',1,'/proveedores','bi bi-truck'),(20,'Registro',1,NULL,NULL),(21,'Registro valorizado',1,NULL,NULL),(22,'Sucursales',1,NULL,NULL),(23,'Clientes',1,NULL,NULL),(24,'Cotizaciones',1,NULL,NULL);
 /*!40000 ALTER TABLE `modulos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -766,13 +866,13 @@ CREATE TABLE `numserie` (
   `idtipodocumento` int NOT NULL,
   `numserie` varchar(4) DEFAULT NULL,
   `estado` int NOT NULL DEFAULT '1',
-  `idusuario` int DEFAULT NULL,
+  `idsucursal` int DEFAULT NULL,
   PRIMARY KEY (`idnumserie`),
   KEY `idtipodocumento` (`idtipodocumento`),
-  KEY `fk_usuario_idx` (`idusuario`),
-  CONSTRAINT `fk_usuario` FOREIGN KEY (`idusuario`) REFERENCES `usuario` (`idusuario`),
+  KEY `fk_numserie_sucursal_idx` (`idsucursal`),
+  CONSTRAINT `fk_numserie_sucursal` FOREIGN KEY (`idsucursal`) REFERENCES `sucursal` (`idsucursal`),
   CONSTRAINT `numserie_ibfk_1` FOREIGN KEY (`idtipodocumento`) REFERENCES `tipodocumento` (`idtipodocumento`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -781,7 +881,7 @@ CREATE TABLE `numserie` (
 
 LOCK TABLES `numserie` WRITE;
 /*!40000 ALTER TABLE `numserie` DISABLE KEYS */;
-INSERT INTO `numserie` VALUES (8,1,'F001',1,2),(9,3,'B001',1,2),(10,1,'F002',1,2),(11,3,'B002',1,2),(18,10,'NV01',1,2);
+INSERT INTO `numserie` VALUES (8,1,'F001',1,1),(9,3,'B001',1,1),(10,1,'F002',1,1),(11,3,'B002',1,1),(18,10,'NV01',1,1),(19,1,'F003',1,2),(20,3,'B003',1,2);
 /*!40000 ALTER TABLE `numserie` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -810,7 +910,7 @@ CREATE TABLE `producto` (
   KEY `fk_unidad_idx` (`idunidad`),
   CONSTRAINT `fk_unidad` FOREIGN KEY (`idunidad`) REFERENCES `unidades` (`idunidad`),
   CONSTRAINT `producto_ibfk_1` FOREIGN KEY (`idcategoria`) REFERENCES `categoria` (`idcategoria`)
-) ENGINE=InnoDB AUTO_INCREMENT=368 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=372 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -819,6 +919,7 @@ CREATE TABLE `producto` (
 
 LOCK TABLES `producto` WRITE;
 /*!40000 ALTER TABLE `producto` DISABLE KEYS */;
+INSERT INTO `producto` VALUES (368,27,'Leche','leche',2,3,4,'',1,'000','000',1),(369,28,'Gaseosa','Gaseosa',1,2,5,'',1,'11','00',58),(370,27,'Yogur','Yogur',1,2,0,'',1,'11','00',58),(371,28,'Cifrut','Cifrut',1,2,8,'',1,'111','1111',58);
 /*!40000 ALTER TABLE `producto` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -838,7 +939,7 @@ CREATE TABLE `proveedores` (
   PRIMARY KEY (`idproveedor`),
   KEY `idtipocliente` (`idtipocliente`),
   CONSTRAINT `proveedores_ibfk_1` FOREIGN KEY (`idtipocliente`) REFERENCES `tipocliente` (`idtipocliente`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -847,6 +948,7 @@ CREATE TABLE `proveedores` (
 
 LOCK TABLES `proveedores` WRITE;
 /*!40000 ALTER TABLE `proveedores` DISABLE KEYS */;
+INSERT INTO `proveedores` VALUES (4,1,'10726558839','Cristian Mestanza Ortiz',1);
 /*!40000 ALTER TABLE `proveedores` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -885,10 +987,10 @@ DROP TABLE IF EXISTS `sucursal`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `sucursal` (
-  `idsucursal` int NOT NULL,
+  `idsucursal` int NOT NULL AUTO_INCREMENT,
   `nombre_sursal` varchar(60) DEFAULT NULL,
   PRIMARY KEY (`idsucursal`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -897,6 +999,7 @@ CREATE TABLE `sucursal` (
 
 LOCK TABLES `sucursal` WRITE;
 /*!40000 ALTER TABLE `sucursal` DISABLE KEYS */;
+INSERT INTO `sucursal` VALUES (1,'Casa Matriz'),(2,'Sucursal 2');
 /*!40000 ALTER TABLE `sucursal` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1041,8 +1144,9 @@ CREATE TABLE `tipousuario` (
   `idtipousuario` int NOT NULL AUTO_INCREMENT,
   `nombretipousuario` varchar(255) NOT NULL,
   `estado` int NOT NULL DEFAULT '1',
+  `es_superadmin` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`idtipousuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1051,7 +1155,7 @@ CREATE TABLE `tipousuario` (
 
 LOCK TABLES `tipousuario` WRITE;
 /*!40000 ALTER TABLE `tipousuario` DISABLE KEYS */;
-INSERT INTO `tipousuario` VALUES (1,'Administrador',1),(2,'Cajero',1),(3,'Mesero',1),(4,'Despecho222',0),(6,'Jijija',0),(7,'ss',0),(8,'dd',0),(9,'ss',0),(10,'ejemplo',1);
+INSERT INTO `tipousuario` VALUES (1,'Administrador',1,0),(2,'Cajero',1,0),(3,'Mesero',1,0),(4,'Despecho222',0,0),(6,'Jijija',0,0),(7,'ss',0,0),(8,'dd',0,0),(9,'ss',0,0),(10,'ejemplo',1,0),(11,'Super Admin',1,1);
 /*!40000 ALTER TABLE `tipousuario` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1070,12 +1174,18 @@ CREATE TABLE `transaccion` (
   `fecha` date DEFAULT NULL,
   `hora` time DEFAULT NULL,
   `descripcion` varchar(100) DEFAULT NULL,
+  `idsucursal` int DEFAULT NULL,
+  `idusuario` int DEFAULT NULL,
   PRIMARY KEY (`id_transaccion`),
   KEY `fk_caja_idx` (`id_caja`),
   KEY `fk_tipo_idx` (`id_tipo_transaccion`),
+  KEY `fk_transaccion_sucursal_idx` (`idsucursal`),
+  KEY `fk_transaccion_usuario_idx` (`idusuario`),
   CONSTRAINT `fk_caja` FOREIGN KEY (`id_caja`) REFERENCES `caja` (`id_caja`),
-  CONSTRAINT `fk_tipo` FOREIGN KEY (`id_tipo_transaccion`) REFERENCES `tipo_transaccion` (`id_tipo_transaccion`)
-) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `fk_tipo` FOREIGN KEY (`id_tipo_transaccion`) REFERENCES `tipo_transaccion` (`id_tipo_transaccion`),
+  CONSTRAINT `fk_transaccion_sucursal` FOREIGN KEY (`idsucursal`) REFERENCES `sucursal` (`idsucursal`),
+  CONSTRAINT `fk_transaccion_usuario` FOREIGN KEY (`idusuario`) REFERENCES `usuario` (`idusuario`)
+) ENGINE=InnoDB AUTO_INCREMENT=135 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1084,6 +1194,7 @@ CREATE TABLE `transaccion` (
 
 LOCK TABLES `transaccion` WRITE;
 /*!40000 ALTER TABLE `transaccion` DISABLE KEYS */;
+INSERT INTO `transaccion` VALUES (121,24,1,2.00,'2026-05-29','17:06:51',NULL,1,NULL),(122,24,1,2.00,'2026-05-29','17:13:05',NULL,1,NULL),(123,24,1,2.00,'2026-05-29','17:21:29',NULL,1,NULL),(124,24,1,4.00,'2026-05-30','23:24:49',NULL,1,NULL),(125,24,1,2.36,'2026-06-04','09:02:36',NULL,1,NULL),(126,24,1,2.00,'2026-06-04','09:36:23',NULL,1,NULL),(127,24,1,2.00,'2026-06-04','09:40:53',NULL,1,NULL),(128,NULL,1,2.00,'2026-06-04','09:50:56',NULL,NULL,NULL),(129,NULL,1,2.00,'2026-06-04','09:50:58',NULL,NULL,NULL),(130,NULL,1,3.00,'2026-06-04','09:55:47',NULL,2,NULL),(131,NULL,1,2.36,'2026-06-04','09:59:59',NULL,2,24),(132,NULL,1,2.00,'2026-06-04','10:17:38',NULL,2,24),(133,24,1,5.00,'2026-06-04','21:37:45',NULL,1,2),(134,24,1,4.00,'2026-06-04','21:38:27',NULL,1,2);
 /*!40000 ALTER TABLE `transaccion` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1129,10 +1240,13 @@ CREATE TABLE `usuario` (
   `celular` varchar(10) NOT NULL,
   `dni` varchar(10) NOT NULL,
   `estado` int NOT NULL DEFAULT '1',
+  `idsucursal` int DEFAULT NULL,
   PRIMARY KEY (`idusuario`),
   KEY `idtipousuario` (`idtipousuario`),
+  KEY `fk_usuario_sucursal_idx` (`idsucursal`),
+  CONSTRAINT `fk_usuario_sucursal` FOREIGN KEY (`idsucursal`) REFERENCES `sucursal` (`idsucursal`),
   CONSTRAINT `usuario_ibfk_1` FOREIGN KEY (`idtipousuario`) REFERENCES `tipousuario` (`idtipousuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1141,7 +1255,7 @@ CREATE TABLE `usuario` (
 
 LOCK TABLES `usuario` WRITE;
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
-INSERT INTO `usuario` VALUES (2,'Cristian Mestanza Ortiz','cristianmestanzaortiz870@gmail.com','1234',1,'916762676','72655883',1);
+INSERT INTO `usuario` VALUES (2,'Cristian Mestanza Ortiz','cristianmestanzaortiz870@gmail.com','1234',11,'916762676','72655883',1,1),(24,'Gian Pier','gian@gmail.com','1234',2,'916762676','72655883',1,2);
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1188,7 +1302,7 @@ CREATE TABLE `venta` (
   CONSTRAINT `fk_modoPago` FOREIGN KEY (`idmodoPago`) REFERENCES `modopago` (`idmodoPago`),
   CONSTRAINT `venta_ibfk_1` FOREIGN KEY (`idnumserie`) REFERENCES `numserie` (`idnumserie`),
   CONSTRAINT `venta_ibfk_2` FOREIGN KEY (`idcliente`) REFERENCES `clientes` (`idcliente`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1197,6 +1311,7 @@ CREATE TABLE `venta` (
 
 LOCK TABLES `venta` WRITE;
 /*!40000 ALTER TABLE `venta` DISABLE KEYS */;
+INSERT INTO `venta` VALUES (44,9,'000001',220,'2026-05-29','17:06:50',0,'','/media/tickets/boletas/20615469751-03-B001-000001.pdf','','','',9,1,1,0.00,0.00,0.00,2.00,0.00,2.00,0,'','-'),(45,9,'000002',221,'2026-05-29','17:13:05',0,'','/media/tickets/boletas/20615469751-03-B001-000002.pdf','','','',9,1,1,0.00,0.00,0.00,2.00,0.00,2.00,0,'','-'),(46,9,'000003',222,'2026-05-29','17:21:29',1,'','/media/tickets/boletas/20615469751-03-B001-000003.pdf','','','',9,1,1,0.00,0.00,0.00,2.00,0.00,2.00,0,'','-'),(47,9,'000004',223,'2026-05-30','23:24:49',1,'','/media/tickets/boletas/20615469751-03-B001-000004.pdf','','','',9,1,1,0.00,0.00,0.00,4.00,0.00,4.00,0,'','-'),(48,20,'000001',224,'2026-06-04','09:02:36',1,'','/media/tickets/boletas/20615469751-03-B003-000001.pdf','','','',1,1,1,2.00,0.36,0.00,0.00,0.00,2.36,0,'','-'),(49,20,'000002',225,'2026-06-04','09:36:23',1,'','/media/tickets/boletas/20615469751-03-B003-000002.pdf','','','',9,1,1,0.00,0.00,0.00,2.00,0.00,2.00,0,'','-'),(50,9,'000005',226,'2026-06-04','09:40:53',1,'','/media/tickets/boletas/20615469751-03-B001-000005.pdf','','','',9,1,1,0.00,0.00,0.00,2.00,0.00,2.00,0,'','-'),(51,19,'000001',227,'2026-06-04','09:45:09',1,'','/media/tickets/facturas/20615469751-01-F003-000001.pdf','','','',9,1,1,0.00,0.00,0.00,3.00,0.00,3.00,0,'','-'),(52,20,'000003',228,'2026-06-04','09:50:56',1,'','/media/tickets/boletas/20615469751-03-B003-000003.pdf','','','',9,1,1,0.00,0.00,0.00,2.00,0.00,2.00,0,'','-'),(53,20,'000004',229,'2026-06-04','09:50:58',1,'','/media/tickets/boletas/20615469751-03-B003-000004.pdf','','','',9,1,1,0.00,0.00,0.00,2.00,0.00,2.00,0,'','-'),(54,20,'000005',230,'2026-06-04','09:55:47',1,'','/media/tickets/boletas/20615469751-03-B003-000005.pdf','','','',9,1,1,0.00,0.00,0.00,3.00,0.00,3.00,0,'','-'),(55,20,'000006',231,'2026-06-04','09:59:58',1,'','/media/tickets/boletas/20615469751-03-B003-000006.pdf','','','',1,1,1,2.00,0.36,0.00,0.00,0.00,2.36,0,'','-'),(56,20,'000007',220,'2026-06-04','10:17:37',1,'','/media/tickets/boletas/20615469751-03-B003-000007.pdf','','','',9,1,1,0.00,0.00,0.00,2.00,0.00,2.00,0,'','-'),(57,9,'000006',221,'2026-06-04','21:37:44',1,'','/media/tickets/boletas/20615469751-03-B001-000006.pdf','','','',9,1,1,0.00,0.00,0.00,5.00,0.00,5.00,0,'','-'),(58,9,'000007',221,'2026-06-04','21:38:27',1,'','/media/tickets/boletas/20615469751-03-B001-000007.pdf','','','',9,1,1,0.00,0.00,0.00,4.00,0.00,4.00,0,'','-');
 /*!40000 ALTER TABLE `venta` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1219,7 +1334,7 @@ CREATE TABLE `venta_detalle` (
   KEY `idproducto` (`idproducto`),
   CONSTRAINT `venta_detalle_ibfk_1` FOREIGN KEY (`idventa`) REFERENCES `venta` (`idventa`),
   CONSTRAINT `venta_detalle_ibfk_2` FOREIGN KEY (`idproducto`) REFERENCES `producto` (`idproducto`)
-) ENGINE=InnoDB AUTO_INCREMENT=231 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=249 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1228,6 +1343,7 @@ CREATE TABLE `venta_detalle` (
 
 LOCK TABLES `venta_detalle` WRITE;
 /*!40000 ALTER TABLE `venta_detalle` DISABLE KEYS */;
+INSERT INTO `venta_detalle` VALUES (231,44,369,1.00,2.00,'-'),(232,45,369,1.00,2.00,'-'),(233,46,369,1.00,2.00,'-'),(234,47,369,1.00,2.00,'-'),(235,47,370,1.00,2.00,'-'),(236,48,370,1.00,2.00,'-'),(237,49,370,1.00,2.00,'-'),(238,50,369,1.00,2.00,'-'),(239,51,368,1.00,3.00,'-'),(240,52,370,1.00,2.00,'-'),(241,53,370,1.00,2.00,'-'),(242,54,368,1.00,3.00,'-'),(243,55,369,1.00,2.00,'-'),(244,56,369,1.00,2.00,'-'),(245,57,368,1.00,3.00,'-'),(246,57,369,1.00,2.00,'-'),(247,58,369,1.00,2.00,'-'),(248,58,370,1.00,2.00,'-');
 /*!40000 ALTER TABLE `venta_detalle` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -1240,4 +1356,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-27 19:25:52
+-- Dump completed on 2026-06-04 22:34:26

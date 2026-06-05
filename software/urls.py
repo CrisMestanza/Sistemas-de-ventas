@@ -12,6 +12,7 @@ from .views import permisos
 from .views import cpanel
 from .views import tipoUsuarios
 from .views import numeroserie
+from .views import sucursal
 from .views import cerrarcaja
 from .views import registroCaja
 from .views import transaccion
@@ -77,11 +78,13 @@ urlpatterns = [
     #Permisos
     path('permisos', permisos.permisos, name="permisos"),
     path('permisos/agregaPermiso', permisos.agregaPermiso, name="agregaPermiso"),
+    path('permisos/editarPermiso', permisos.editarPermiso, name="editarPermiso"),
     path('permisos/eliminarPermiso/<int:id>', permisos.eliminarPermiso, name="eliminarPermiso"),
      
     #productos
     path('productos', productos.productos, name="productos"),
     path('productos/agregar', productos.agregar, name="productosAgregar"),
+    path('productos/agregar-desde-compra', productos.agregar_desde_compra, name="agregarDesdeCompra"),
     path('productos/editar', productos.editado, name="productosEditado"),
     path('productos/eliminarProducto/<int:idproducto>', productos.eliminar, name="eliminarProducto"),
 
@@ -115,6 +118,12 @@ urlpatterns = [
     path('tipousuarios/agregar', tipoUsuarios.tipousuariosAgregar, name="tipousuariosAgregar"),
     path('tipousuarios/editar', tipoUsuarios.tipousuariosEditar, name="tipousuariosEditar"),
     path('tipousuarios/eliminar/<int:id>', tipoUsuarios.tipousuariosEliminar, name="tipousuariosEliminar"),
+
+    #Sucursales
+    path('sucursales', sucursal.sucursales, name="sucursales"),
+    path('sucursales/agregar', sucursal.sucursalAgregar, name="sucursalAgregar"),
+    path('sucursales/editar', sucursal.sucursalEditar, name="sucursalEditar"),
+    path('sucursales/eliminar/<int:id>', sucursal.sucursalEliminar, name="sucursalEliminar"),
 
     #Número de serie
     path('numeroserie', numeroserie.numeroserie, name="numeroserie"),

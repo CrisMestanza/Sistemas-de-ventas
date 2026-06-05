@@ -8,6 +8,7 @@ from datetime import date
 from software.models.VentaModel import Venta
 from software.models.comprasModel import Compras
 from software.models.detalletipousuarioxmodulosModel import Detalletipousuarioxmodulos
+from software.models.SucursalModel import Sucursal
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -20,7 +21,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 
 
-def _get_registros(fecha_inicio, fecha_fin, operacion):
+def _get_registros(fecha_inicio, fecha_fin, operacion, idsucursal=None, es_superadmin=False):
     ventas = []
     compras = []
 
@@ -28,6 +29,8 @@ def _get_registros(fecha_inicio, fecha_fin, operacion):
         qs = Venta.objects.filter(estado=1).select_related(
             'idnumserie__idtipodocumento'
         )
+        if not es_superadmin and idsucursal:
+            qs = qs.filter(idnumserie__idsucursal=idsucursal)
         if fecha_inicio:
             qs = qs.filter(fechaemision__gte=fecha_inicio)
         if fecha_fin:
@@ -71,18 +74,31 @@ def _get_registros(fecha_inicio, fecha_fin, operacion):
     return registros
 
 
+def _sucursal_params(request):
+    es_superadmin = request.session.get('es_superadmin', False)
+    idsucursal = request.GET.get('sucursal') if es_superadmin else request.session.get('idsucursal')
+    return es_superadmin, idsucursal
+
+
 def registro(request):
     id2 = request.session.get('idtipousuario')
     if not id2:
         return render(request, 'errors/error.html')
 
     permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id2)
+    es_superadmin, idsucursal = _sucursal_params(request)
+    sucursales = Sucursal.objects.all() if es_superadmin else []
+    sucursal_filtro = request.GET.get('sucursal', '')
 
     fecha_inicio = request.GET.get('fecha_inicio') or None
     fecha_fin = request.GET.get('fecha_fin') or None
     operacion = request.GET.get('operacion', 'todos')
 
-    registros = _get_registros(fecha_inicio, fecha_fin, operacion)
+    registros = _get_registros(
+        fecha_inicio, fecha_fin, operacion,
+        idsucursal=idsucursal,
+        es_superadmin=es_superadmin,
+    )
 
     total_entradas = sum(r['entrada'] for r in registros)
     total_salidas = sum(r['salida'] for r in registros)
@@ -98,6 +114,8 @@ def registro(request):
         'total_salidas': total_salidas,
         'saldo_total': saldo_total,
         'nombrecompleto': request.session.get('nombrecompleto'),
+        'sucursales': sucursales,
+        'sucursal_filtro': sucursal_filtro,
     })
 
 
@@ -105,8 +123,9 @@ def export_registro_excel(request):
     fecha_inicio = request.GET.get('fecha_inicio') or None
     fecha_fin = request.GET.get('fecha_fin') or None
     operacion = request.GET.get('operacion', 'todos')
+    es_superadmin, idsucursal = _sucursal_params(request)
 
-    registros = _get_registros(fecha_inicio, fecha_fin, operacion)
+    registros = _get_registros(fecha_inicio, fecha_fin, operacion, idsucursal=idsucursal, es_superadmin=es_superadmin)
 
     wb = Workbook()
     ws = wb.active
@@ -164,8 +183,9 @@ def export_registro_pdf(request):
     fecha_inicio = request.GET.get('fecha_inicio') or None
     fecha_fin = request.GET.get('fecha_fin') or None
     operacion = request.GET.get('operacion', 'todos')
+    es_superadmin, idsucursal = _sucursal_params(request)
 
-    registros = _get_registros(fecha_inicio, fecha_fin, operacion)
+    registros = _get_registros(fecha_inicio, fecha_fin, operacion, idsucursal=idsucursal, es_superadmin=es_superadmin)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=registro.pdf'

@@ -24,6 +24,7 @@ from software.models.ProveedoresModel import Proveedores
 from software.models.NumserieModel import Numserie
 from software.models.ModulosModel import Modulos
 from software.models.empresaModel import Empresa
+from software.models.SucursalModel import Sucursal
 from software.models.empleadoModel import Empleado
 from software.models.distritosModel import Distritos
 from software.models.detalletipousuarioxmodulosModel import Detalletipousuarioxmodulos
@@ -42,12 +43,12 @@ def numeroserie(request):
 
         numseries = Numserie.objects.filter(estado=1)
         documentos = Tipodocumento.objects.filter(estado=1)
-        usuarios = Usuario.objects.filter(estado=1)
+        sucursales = Sucursal.objects.all()
         data = {
             'numseries': numseries,
             "permisos": permisos,
             "documentos": documentos,
-            "usuarios":usuarios
+            "sucursales": sucursales,
         }
 
         return render(request, 'numserie/numserie.html', data)
@@ -64,17 +65,16 @@ def numeroserieEliminar(request, id):
 
 def numeroserieAgregar(request):
     nombre = request.POST.get('nombreSerie')
-    idUsuario = request.POST.get('usuario')
+    idSucursal = request.POST.get('sucursal')
 
     iddocumento = request.POST.get('iddocumento')
     documento = Tipodocumento.objects.get(idtipodocumento=iddocumento)
+    sucursal = Sucursal.objects.get(idsucursal=idSucursal)
 
-    usuario = Usuario.objects.get(idusuario=idUsuario)
-    
     serie = Numserie()
     serie.idtipodocumento = documento
     serie.numserie = nombre
-    serie.idusuario = usuario
+    serie.idsucursal = sucursal
     serie.estado = 1
     serie.save()
 
@@ -84,18 +84,15 @@ def numeroserieAgregar(request):
 def numeroserieEditar(request):
     id = request.POST.get('idnumserie2')
     nombre = request.POST.get('nombreSerie2')
-    idUsuario = request.POST.get('usuario2')
-    
-    print(idUsuario)
+    idSucursal = request.POST.get('sucursal2')
 
     iddocumento = request.POST.get('iddocumento2')
     documento = Tipodocumento.objects.get(idtipodocumento=iddocumento)
-    
-    usuario = Usuario.objects.get(idusuario=idUsuario)
+    sucursal = Sucursal.objects.get(idsucursal=idSucursal)
 
     serie = Numserie.objects.get(idnumserie=id)
     serie.idtipodocumento = documento
-    serie.idusuario = usuario
+    serie.idsucursal = sucursal
     serie.numserie = nombre
 
     serie.save()

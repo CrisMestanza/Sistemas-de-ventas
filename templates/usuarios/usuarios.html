@@ -25,6 +25,7 @@
                                     <th scope="col">CODIGO</th>
                                     <th scope="col">NOMBRE</th>
                                     <th scope="col">Tipo usuario</th>
+                                    <th scope="col">Sucursal</th>
                                     <th scope="col">CORREO</th>
                                     <th scope="col">CONTRASEÑA</th>
                                     <th scope="col">CELULAR</th>
@@ -38,6 +39,7 @@
                                         <td>{{ forloop.counter }}</td>
                                         <td>{{ usuario.nombrecompleto }}</td>
                                         <td>{{ usuario.idtipousuario.nombretipousuario }}</td>
+                                        <td>{{ usuario.idsucursal.nombre_sucursal|default:"-" }}</td>
                                         <td>{{ usuario.correo }}</td>
                                         <td>{{ usuario.contrasena }}</td>
                                         <td>{{ usuario.celular }}</td>
@@ -78,6 +80,15 @@
                                                             {% for tipoUsuario in tipoUsuarios %}
                                                                 <option value="{{ tipoUsuario.idtipousuario }}" {% if tipoUsuario.idtipousuario == usuario.tipoUsuario %}selected{% endif %}>
                                                                     {{ tipoUsuario.nombretipousuario }}
+                                                                </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <label for="sucursalUsuario">SUCURSAL</label><br>
+                                                        <select class="form-select" name="sucursalUsuario">
+                                                            <option value="">-- Sin sucursal --</option>
+                                                            {% for sucursal in sucursales %}
+                                                                <option value="{{ sucursal.idsucursal }}" {% if sucursal.idsucursal == usuario.idsucursal_id %}selected{% endif %}>
+                                                                    {{ sucursal.nombre_sucursal }}
                                                                 </option>
                                                             {% endfor %}
                                                         </select>
@@ -140,7 +151,15 @@
                             <option value="{{ tipoUsuario.idtipousuario }}">{{ tipoUsuario.nombretipousuario }}</option>
                         {% endfor %}
                     </select>
-                
+
+                    <label for="sucursalUsuario2">SUCURSAL</label><br>
+                    <select class="form-select" name="sucursalUsuario2">
+                        <option value="">-- Sin sucursal --</option>
+                        {% for sucursal in sucursales %}
+                            <option value="{{ sucursal.idsucursal }}">{{ sucursal.nombre_sucursal }}</option>
+                        {% endfor %}
+                    </select>
+
                     <label for="celularUsuario2">CELULAR</label><br>
                     <input type="text" name="celularUsuario2" class="form-control">
                 

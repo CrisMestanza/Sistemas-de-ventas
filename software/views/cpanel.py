@@ -45,18 +45,34 @@ def cpanel(request):
     if id2:
         permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id2)
 
+        es_superadmin = request.session.get('es_superadmin', False)
+        idsucursal = request.session.get('idsucursal')
+
         # Ejecutar la consulta SQL para obtener los datos de ventas por mes
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT 
-                    DATE_FORMAT(`venta`.`fechaemision`, '%Y %M') AS `mes_anio`, 
-                    COALESCE(SUM(`venta_detalle`.`preciosubtotal`), 0) AS `total`
-                FROM `venta`
-                INNER JOIN `venta_detalle` ON (`venta`.`idventa` = `venta_detalle`.`idventa`)
-                WHERE `venta`.`estado` = 1
-                GROUP BY `mes_anio`
-                ORDER BY `mes_anio`;
-            """)
+            if es_superadmin:
+                cursor.execute("""
+                    SELECT
+                        DATE_FORMAT(`venta`.`fechaemision`, '%Y %M') AS `mes_anio`,
+                        COALESCE(SUM(`venta_detalle`.`preciosubtotal`), 0) AS `total`
+                    FROM `venta`
+                    INNER JOIN `venta_detalle` ON (`venta`.`idventa` = `venta_detalle`.`idventa`)
+                    WHERE `venta`.`estado` = 1
+                    GROUP BY `mes_anio`
+                    ORDER BY `mes_anio`;
+                """)
+            else:
+                cursor.execute("""
+                    SELECT
+                        DATE_FORMAT(`venta`.`fechaemision`, '%%Y %%M') AS `mes_anio`,
+                        COALESCE(SUM(`venta_detalle`.`preciosubtotal`), 0) AS `total`
+                    FROM `venta`
+                    INNER JOIN `venta_detalle` ON (`venta`.`idventa` = `venta_detalle`.`idventa`)
+                    INNER JOIN `numserie` ON (`venta`.`idnumserie` = `numserie`.`idnumserie`)
+                    WHERE `venta`.`estado` = 1 AND `numserie`.`idsucursal` = %s
+                    GROUP BY `mes_anio`
+                    ORDER BY `mes_anio`;
+                """, [idsucursal])
             rows = cursor.fetchall()
 
         # Calcular el total general de ventas

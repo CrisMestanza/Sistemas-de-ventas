@@ -83,6 +83,40 @@ def agregar(request):
     return redirect('productos')
 
 
+def agregar_desde_compra(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    try:
+        categoria_id = request.POST.get('categoria')
+        unidad_id = request.POST.get('unidad')
+        nombre = request.POST.get('nombreProducto', '').strip()
+        descripcion = request.POST.get('descripcionProducto', '')
+        precio_compra = float((request.POST.get('precioCompra') or '0').replace(',', '.'))
+        precio_venta = float((request.POST.get('precioProducto') or '0').replace(',', '.'))
+        stock = request.POST.get('stockProducto') or 0
+        codigo = request.POST.get('codigo', '')
+        codigo_barras = request.POST.get('codigo_barras', '')
+
+        categoria = Categoria.objects.get(idcategoria=categoria_id)
+        unidad = Unidades.objects.get(idunidad=unidad_id)
+
+        producto = Producto.objects.create(
+            idcategoria=categoria,
+            idunidad=unidad,
+            nomproducto=nombre,
+            descripcion=descripcion,
+            preciounitario=precio_venta,
+            precioCompra=precio_compra,
+            stockactual=stock,
+            estado=1,
+            codigo=codigo,
+            codigo_barras=codigo_barras,
+        )
+        return JsonResponse({'nombre': producto.nomproducto, 'precio': float(producto.preciounitario)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
 def editado(request):
     def _normalizar_fk_id(valor):
         if valor in (None, ''):

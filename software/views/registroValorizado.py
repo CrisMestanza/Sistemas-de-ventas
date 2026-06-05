@@ -7,6 +7,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from software.models.VentaModel import Venta
 from software.models.comprasModel import Compras
 from software.models.detalletipousuarioxmodulosModel import Detalletipousuarioxmodulos
+from software.models.SucursalModel import Sucursal
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -26,7 +27,13 @@ def _q(val):
     return val.quantize(CENT, ROUND_HALF_UP)
 
 
-def _get_registros_val(fecha_inicio, fecha_fin, operacion):
+def _sucursal_params_val(request):
+    es_superadmin = request.session.get('es_superadmin', False)
+    idsucursal = request.GET.get('sucursal') if es_superadmin else request.session.get('idsucursal')
+    return es_superadmin, idsucursal
+
+
+def _get_registros_val(fecha_inicio, fecha_fin, operacion, idsucursal=None, es_superadmin=False):
     ventas = []
     compras = []
 
@@ -37,6 +44,10 @@ def _get_registros_val(fecha_inicio, fecha_fin, operacion):
             total_cant=Coalesce(Sum('ventadetalle__cantidad'), Value(0), output_field=DecimalField()),
             total_monto=Coalesce(Sum('ventadetalle__preciosubtotal'), Value(0), output_field=DecimalField()),
         )
+        if not es_superadmin and idsucursal:
+            qs = qs.filter(idnumserie__idsucursal=idsucursal)
+        elif es_superadmin and idsucursal:
+            qs = qs.filter(idnumserie__idsucursal=idsucursal)
         if fecha_inicio:
             qs = qs.filter(fechaemision__gte=fecha_inicio)
         if fecha_fin:
@@ -59,6 +70,10 @@ def _get_registros_val(fecha_inicio, fecha_fin, operacion):
             total_cant=Sum('compradetalle__cantidad'),
             total_monto=Sum('compradetalle__subtotal'),
         )
+        if not es_superadmin and idsucursal:
+            qs = qs.filter(idsucursal=idsucursal)
+        elif es_superadmin and idsucursal:
+            qs = qs.filter(idsucursal=idsucursal)
         if fecha_inicio:
             qs = qs.filter(fechacompra__gte=fecha_inicio)
         if fecha_fin:
@@ -111,27 +126,33 @@ def registro_valorizado(request):
         return render(request, 'errors/error.html')
 
     permisos     = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id2)
+    es_superadmin, idsucursal = _sucursal_params_val(request)
+    sucursales    = Sucursal.objects.all() if es_superadmin else []
+    sucursal_filtro = request.GET.get('sucursal', '')
     fecha_inicio = request.GET.get('fecha_inicio') or None
     fecha_fin    = request.GET.get('fecha_fin')    or None
     operacion    = request.GET.get('operacion', 'todos')
 
-    registros = _get_registros_val(fecha_inicio, fecha_fin, operacion)
+    registros = _get_registros_val(fecha_inicio, fecha_fin, operacion, idsucursal=idsucursal, es_superadmin=es_superadmin)
 
     return render(request, 'registroValorizado/registroValorizado.html', {
-        'permisos':       permisos,
-        'registros':      registros,
-        'fecha_inicio':   fecha_inicio or '',
-        'fecha_fin':      fecha_fin    or '',
-        'operacion':      operacion,
-        'nombrecompleto': request.session.get('nombrecompleto'),
+        'permisos':        permisos,
+        'registros':       registros,
+        'fecha_inicio':    fecha_inicio or '',
+        'fecha_fin':       fecha_fin    or '',
+        'operacion':       operacion,
+        'nombrecompleto':  request.session.get('nombrecompleto'),
+        'sucursales':      sucursales,
+        'sucursal_filtro': sucursal_filtro,
     })
 
 
 def export_valorizado_excel(request):
-    fecha_inicio = request.GET.get('fecha_inicio') or None
-    fecha_fin    = request.GET.get('fecha_fin')    or None
-    operacion    = request.GET.get('operacion', 'todos')
-    registros    = _get_registros_val(fecha_inicio, fecha_fin, operacion)
+    fecha_inicio  = request.GET.get('fecha_inicio') or None
+    fecha_fin     = request.GET.get('fecha_fin')    or None
+    operacion     = request.GET.get('operacion', 'todos')
+    es_superadmin, idsucursal = _sucursal_params_val(request)
+    registros     = _get_registros_val(fecha_inicio, fecha_fin, operacion, idsucursal=idsucursal, es_superadmin=es_superadmin)
 
     wb = Workbook()
     ws = wb.active
@@ -195,10 +216,11 @@ def export_valorizado_excel(request):
 
 
 def export_valorizado_pdf(request):
-    fecha_inicio = request.GET.get('fecha_inicio') or None
-    fecha_fin    = request.GET.get('fecha_fin')    or None
-    operacion    = request.GET.get('operacion', 'todos')
-    registros    = _get_registros_val(fecha_inicio, fecha_fin, operacion)
+    fecha_inicio  = request.GET.get('fecha_inicio') or None
+    fecha_fin     = request.GET.get('fecha_fin')    or None
+    operacion     = request.GET.get('operacion', 'todos')
+    es_superadmin, idsucursal = _sucursal_params_val(request)
+    registros     = _get_registros_val(fecha_inicio, fecha_fin, operacion, idsucursal=idsucursal, es_superadmin=es_superadmin)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=registro_valorizado.pdf'

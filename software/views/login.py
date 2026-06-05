@@ -28,6 +28,8 @@ def login(request):
             request.session['idtipousuario'] = usuarios.idtipousuario.idtipousuario
             request.session['nombrecompleto'] = usuarios.nombrecompleto
             request.session['idusuario'] = usuarios.idusuario
+            request.session['idsucursal'] = usuarios.idsucursal_id
+            request.session['es_superadmin'] = bool(usuarios.idtipousuario.es_superadmin)
 
             # =========================
             # LLAMADA A API EXTERNA

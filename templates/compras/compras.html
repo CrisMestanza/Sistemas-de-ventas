@@ -25,6 +25,23 @@
                     Exportar todo los datos a excel 
                   </a> 
                    
+                  {% if request.session.es_superadmin %}
+                  <form method="get" action="" class="d-flex align-items-center gap-2 mb-3 mt-2">
+                    <label class="mb-0 fw-bold">Sucursal:</label>
+                    <select name="sucursal" class="form-select" style="width:200px;">
+                      <option value="">-- Todas --</option>
+                      {% for s in sucursales %}
+                        <option value="{{ s.idsucursal }}" {% if sucursal_filtro == s.idsucursal|stringformat:"s" %}selected{% endif %}>
+                          {{ s.nombre_sucursal }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-dark">Filtrar</button>
+                    {% if sucursal_filtro %}
+                      <a href="/compras" class="btn btn-outline-secondary">Limpiar</a>
+                    {% endif %}
+                  </form>
+                  {% endif %}
                   <h3><strong>Buscar entre fechas: </strong></h3>
                   <div class="d-flex align-items-center">
                     <div class="me-2">
@@ -44,6 +61,7 @@
                               <th scope="col">#</th>
                               <th scope="col">Documento</th>
                               <th scope="col">Proveedor</th>
+                              <th scope="col">Sucursal</th>
                               <th scope="col">Total</th>
                               <th scope="col">Fecha</th>
                               <th scope="col">Acciones</th>
@@ -56,6 +74,7 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ resultado.numcorrelativo }}</td>
                                 <td>{{ resultado.idproveedor__razonsocial }}</td>
+                                <td>{{ resultado.idsucursal__nombre_sucursal|default:"-" }}</td>
                                 <td> {{ resultado.total }} </td>
                                 <td class="fechaCompra">{{  resultado.fechacompra}}</td>
                                 <td>

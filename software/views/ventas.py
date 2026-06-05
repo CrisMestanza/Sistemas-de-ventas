@@ -442,28 +442,68 @@ def ventas(request):
     id = request.session.get('idtipousuario')
 
     if id:
+        from software.models.SucursalModel import Sucursal
         permisos = Detalletipousuarioxmodulos.objects.filter(idtipousuario=id)
+        es_superadmin = request.session.get('es_superadmin', False)
+        idsucursal = request.session.get('idsucursal')
+
+        sucursal_filtro = request.GET.get('sucursal') if es_superadmin else None
+        sucursales = Sucursal.objects.all() if es_superadmin else []
 
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`total_a_pagar` AS `total`,
-                `venta`.`fechaemision`, `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`, `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`
-                FROM `venta`
-                INNER JOIN `venta_detalle` ON (`venta`.`idventa` = `venta_detalle`.`idventa`)
-                INNER JOIN `numserie` ON (`venta`.`idnumserie` = `numserie`.`idnumserie`)
-                INNER JOIN `clientes` ON (`clientes`.`idcliente` = `venta`.`idcliente`)
-                WHERE `venta`.`estado` = 1
-                GROUP BY `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`fechaemision`,
-                `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`,
-                `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`
-                Order By `venta`.`idventa` DESC
-                
-            """)
+            if es_superadmin and sucursal_filtro:
+                cursor.execute("""
+                    SELECT `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`total_a_pagar` AS `total`,
+                    `venta`.`fechaemision`, `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`, `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`, `sucursal`.`nombre_sursal`
+                    FROM `venta`
+                    INNER JOIN `venta_detalle` ON (`venta`.`idventa` = `venta_detalle`.`idventa`)
+                    INNER JOIN `numserie` ON (`venta`.`idnumserie` = `numserie`.`idnumserie`)
+                    INNER JOIN `clientes` ON (`clientes`.`idcliente` = `venta`.`idcliente`)
+                    LEFT JOIN `sucursal` ON (`numserie`.`idsucursal` = `sucursal`.`idsucursal`)
+                    WHERE `venta`.`estado` = 1 AND `numserie`.`idsucursal` = %s
+                    GROUP BY `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`fechaemision`,
+                    `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`,
+                    `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`, `sucursal`.`nombre_sursal`
+                    ORDER BY `venta`.`idventa` DESC
+                """, [sucursal_filtro])
+            elif es_superadmin:
+                cursor.execute("""
+                    SELECT `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`total_a_pagar` AS `total`,
+                    `venta`.`fechaemision`, `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`, `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`, `sucursal`.`nombre_sursal`
+                    FROM `venta`
+                    INNER JOIN `venta_detalle` ON (`venta`.`idventa` = `venta_detalle`.`idventa`)
+                    INNER JOIN `numserie` ON (`venta`.`idnumserie` = `numserie`.`idnumserie`)
+                    INNER JOIN `clientes` ON (`clientes`.`idcliente` = `venta`.`idcliente`)
+                    LEFT JOIN `sucursal` ON (`numserie`.`idsucursal` = `sucursal`.`idsucursal`)
+                    WHERE `venta`.`estado` = 1
+                    GROUP BY `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`fechaemision`,
+                    `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`,
+                    `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`, `sucursal`.`nombre_sursal`
+                    ORDER BY `venta`.`idventa` DESC
+                """)
+            else:
+                cursor.execute("""
+                    SELECT `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`total_a_pagar` AS `total`,
+                    `venta`.`fechaemision`, `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`, `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`, `sucursal`.`nombre_sursal`
+                    FROM `venta`
+                    INNER JOIN `venta_detalle` ON (`venta`.`idventa` = `venta_detalle`.`idventa`)
+                    INNER JOIN `numserie` ON (`venta`.`idnumserie` = `numserie`.`idnumserie`)
+                    INNER JOIN `clientes` ON (`clientes`.`idcliente` = `venta`.`idcliente`)
+                    LEFT JOIN `sucursal` ON (`numserie`.`idsucursal` = `sucursal`.`idsucursal`)
+                    WHERE `venta`.`estado` = 1 AND `numserie`.`idsucursal` = %s
+                    GROUP BY `venta`.`idventa`, `clientes`.`razonsocial`, `venta`.`fechaemision`,
+                    `numserie`.`numserie`, `venta`.`numcorrelativo`, `venta`.`ruta_pdf`, `venta`.`ruta_cdr`,
+                    `venta`.`respuesta_sunat_descripcion`, `venta`.`respuesta_sunat_codigo`, `venta`.`ruta_ticket`, `sucursal`.`nombre_sursal`
+                    ORDER BY `venta`.`idventa` DESC
+                """, [idsucursal])
             rows = cursor.fetchall()
 
-        request.session.get('idusuario')
-
-        return render(request, 'venta/venta.html', {'resultados': rows, "permisos": permisos})
+        return render(request, 'venta/venta.html', {
+            'resultados': rows,
+            'permisos': permisos,
+            'sucursales': sucursales,
+            'sucursal_filtro': sucursal_filtro or '',
+        })
     else:
         return HttpResponse("<h1>No tiene accedo señor</h1>")
 
@@ -503,9 +543,15 @@ def agregar(request):
 
 def buscarSerie(request):
 
-    doc = request.POST.get('doc')  # Acceder al valor 'doc' enviado por AJAX
-    get_numserie = Numserie.objects.filter(
-        idtipodocumento=doc, estado=1, idusuario=request.session.get('idusuario'))
+    doc = request.POST.get('doc')
+    es_superadmin = request.session.get('es_superadmin', False)
+
+    if es_superadmin:
+        get_numserie = Numserie.objects.filter(idtipodocumento=doc, estado=1)
+    else:
+        get_numserie = Numserie.objects.filter(
+            idtipodocumento=doc, estado=1, idsucursal=request.session.get('idsucursal'))
+
     serie_list = list(get_numserie.values())
     return JsonResponse(serie_list, safe=False)
 
@@ -626,18 +672,23 @@ def guardarVenta(request):
     placa = request.POST.get('placa')
     # fechDocumento = request.POST.get('fechDocumento')
 
-    productos = [
-        str(producto or '').strip()
-        for producto in request.POST.getlist('producto[nombre][]')
-    ]
-    detalles_producto = [
-        _normalizar_detalle_producto(detalle)
-        for detalle in request.POST.getlist('producto[detalle][]')
-    ]
-    unidades = request.POST.getlist('producto[unidad][]')
-    cantidades = request.POST.getlist('producto[cantidad][]')
-    precio_unitarios = request.POST.getlist('producto[precioUnitario][]')
-    sub_totales = request.POST.getlist('producto[subTotal][]')
+    raw_nombres      = request.POST.getlist('producto[nombre][]')
+    raw_detalles     = request.POST.getlist('producto[detalle][]')
+    raw_unidades     = request.POST.getlist('producto[unidad][]')
+    raw_cantidades   = request.POST.getlist('producto[cantidad][]')
+    raw_precios      = request.POST.getlist('producto[precioUnitario][]')
+    raw_subtotales   = request.POST.getlist('producto[subTotal][]')
+
+    # Filtrar filas donde el nombre esté vacío
+    filas_validas = [i for i, n in enumerate(raw_nombres) if str(n or '').strip()]
+
+    productos        = [str(raw_nombres[i]).strip()                      for i in filas_validas]
+    detalles_producto= [_normalizar_detalle_producto(raw_detalles[i])    for i in filas_validas]
+    unidades         = [raw_unidades[i]                                   for i in filas_validas]
+    cantidades       = [raw_cantidades[i]                                 for i in filas_validas]
+    precio_unitarios = [raw_precios[i]                                    for i in filas_validas]
+    sub_totales      = [raw_subtotales[i]                                 for i in filas_validas]
+
     print(f"Productos: {productos}")
     # Tipo igv
     tipo_igv = request.POST.get('tipo_igv')
@@ -705,10 +756,23 @@ def guardarVenta(request):
     print("tipo_entidad:", tipo_entidad)
     getTipo_entidad = TipoEntidad.objects.get(id_tipo_entidad=tipo_entidad)
     print("Tipo entidad:", getTipo_entidad.descripcion)
-    # agregar cliente
-    cliente = Clientes.objects.create(idtipocliente=tipo_cliente, numdoc=docCliente,
-                                      razonsocial=nomcliente, direccion=direccionCliente, estado=1,
-                                      id_tipo_entidad=getTipo_entidad)
+    # agregar cliente — reusar si el DNI/RUC ya existe
+    cliente = Clientes.objects.filter(numdoc=docCliente, estado=1).first()
+    if cliente:
+        cliente.razonsocial = nomcliente
+        cliente.direccion = direccionCliente
+        cliente.idtipocliente = tipo_cliente
+        cliente.id_tipo_entidad = getTipo_entidad
+        cliente.save()
+    else:
+        cliente = Clientes.objects.create(
+            idtipocliente=tipo_cliente,
+            numdoc=docCliente,
+            razonsocial=nomcliente,
+            direccion=direccionCliente,
+            estado=1,
+            id_tipo_entidad=getTipo_entidad,
+        )
 
     # Obtener numserie
 
@@ -767,19 +831,22 @@ def guardarVenta(request):
         )
         _guardar_detalle_linea(venta_detalle.idventadetalle, detalle_producto)
 
-    # Para transaccion
-    ultimo_registro = Caja.objects.order_by('-id_caja').first()
+    # Para transaccion — registrar con sucursal de la serie usada
+    idusuario_sesion = request.session.get('idusuario')
+    caja_usuario = Caja.objects.filter(
+        usuario_apertura=idusuario_sesion
+    ).order_by('-id_caja').first()
 
-    if ultimo_registro:
-        caja = Caja.objects.get(id_caja=ultimo_registro.id_caja)
-        tipoTransaccion = TipoTransaccion.objects.get(id_tipo_transaccion=1)
-
+    tipoTransaccion = TipoTransaccion.objects.filter(id_tipo_transaccion=1).first()
+    if tipoTransaccion:
         transaccion = Transaccion()
-        transaccion.id_caja = caja
+        transaccion.id_caja = caja_usuario
         transaccion.id_tipo_transaccion = tipoTransaccion
         transaccion.monto = _to_decimal(ventaTotal)
         transaccion.fecha = fechaNow
         transaccion.hora = hora_actual_formateada
+        transaccion.idsucursal = numserie.idsucursal
+        transaccion.idusuario_id = idusuario_sesion
         transaccion.save()
 
     venta_creada.ruta_ticket = generar_ticket_pdf_venta(venta_creada)

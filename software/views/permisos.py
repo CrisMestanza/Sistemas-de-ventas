@@ -77,6 +77,23 @@ def agregaPermiso(request):
     
     return redirect('permisos')
 
-def eliminarPermiso(request,id):
+def editarPermiso(request):
+    idTipoUsuario = request.POST.get('tipoUsuario')
+    nuevos_modulos = request.POST.getlist("permisosTu[idmodulo][]")
+
+    Detalletipousuarioxmodulos.objects.filter(idtipousuario=idTipoUsuario).delete()
+
+    getTipoUsuario = Tipousuario.objects.get(idtipousuario=idTipoUsuario)
+    for idModulo in nuevos_modulos:
+        modulo = Modulos.objects.get(idmodulo=idModulo.strip())
+        Detalletipousuarioxmodulos.objects.create(
+            idtipousuario=getTipoUsuario,
+            idmodulo=modulo
+        )
+
+    return redirect('/permisos?edited=1')
+
+
+def eliminarPermiso(request, id):
     Detalletipousuarioxmodulos.objects.filter(idtipousuario=id).delete()
     return redirect('permisos')

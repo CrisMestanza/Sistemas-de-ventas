@@ -19,13 +19,32 @@
             <h5 class="card-title">Transacciones</h5>
             <button type="" class="btn btn-success"  data-bs-toggle="modal"
               data-bs-target="#myModaAgregar">Agregar transacción</button>
-              
+
+            {% if request.session.es_superadmin %}
+            <form method="get" action="" class="d-flex align-items-center gap-2 mt-3 mb-2">
+              <label class="mb-0 fw-bold">Sucursal:</label>
+              <select name="sucursal" class="form-select" style="width:200px;">
+                <option value="">-- Todas --</option>
+                {% for s in sucursales %}
+                  <option value="{{ s.idsucursal }}" {% if sucursal_filtro == s.idsucursal|stringformat:"s" %}selected{% endif %}>
+                    {{ s.nombre_sucursal }}
+                  </option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-dark">Filtrar</button>
+              {% if sucursal_filtro %}
+                <a href="/transacciones" class="btn btn-outline-secondary">Limpiar</a>
+              {% endif %}
+            </form>
+            {% endif %}
+
               <table class="table datatable">
                 <thead>
                   <tr>
                     <th scope="col">N°</th>
+                    <th scope="col">SUCURSAL</th>
                     <th scope="col">TIPO DE TRANSACCION</th>
-                    <th scope="col">EMPLEADO</th>    
+                    <th scope="col">EMPLEADO</th>
                     <th scope="col">MONTO</th>
                     <th scope="col">FECHA</th>
                     <th scope="col">HORA</th>
@@ -37,12 +56,13 @@
                   {% for transaccionRegistro in transacciones_registros_for %}
                   <tr>
                     <td>{{ forloop.counter }}</td>
+                    <td>{{ transaccionRegistro.idsucursal.nombre_sucursal|default:"-" }}</td>
                     <td>{{ transaccionRegistro.id_tipo_transaccion.nombre }}</td>
-                    <td>{{ transaccionRegistro.id_caja.usuario_apertura.nombrecompleto }}</td>
+                    <td>{{ transaccionRegistro.idusuario.nombrecompleto|default:"-" }}</td>
                     <td>{{ transaccionRegistro.monto }}</td>
                     <td>{{ transaccionRegistro.fecha }}</td>
                     <td>{{ transaccionRegistro.hora }}</td>
-                    <td>{{ transaccionRegistro.descripcion }}</td>
+                    <td>{{ transaccionRegistro.descripcion|default:"-" }}</td>
                     <td>
                       <a type="button" id="btnEditar" class="btn" data-bs-toggle="modal" data-bs-target="#myModal2{{ transaccionRegistro.id_transaccion }}">
                         <i class="fa-solid fa-pen-to-square fa-2xl" style="color: #005eff;"></i>

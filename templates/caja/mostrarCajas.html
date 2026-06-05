@@ -17,12 +17,30 @@
         <div class="card">
           <div class="card-body">
             <h5 class="card-title">Cajas</h5>
-            
-              
+
+            {% if request.session.es_superadmin %}
+            <form method="get" action="" class="d-flex align-items-center gap-2 mb-3">
+              <label class="mb-0 fw-bold">Sucursal:</label>
+              <select name="sucursal" class="form-select" style="width:200px;">
+                <option value="">-- Todas --</option>
+                {% for s in sucursales %}
+                  <option value="{{ s.idsucursal }}" {% if sucursal_filtro == s.idsucursal|stringformat:"s" %}selected{% endif %}>
+                    {{ s.nombre_sucursal }}
+                  </option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-dark">Filtrar</button>
+              {% if sucursal_filtro %}
+                <a href="/cajas" class="btn btn-outline-secondary">Limpiar</a>
+              {% endif %}
+            </form>
+            {% endif %}
+
               <table class="table datatable">
                 <thead>
                   <tr>
                     <th scope="col">N°</th>
+                    <th scope="col">Sucursal</th>
                     <th scope="col">Usuario apertura</th>
                     <th scope="col">Usuario cierre</th>
                     <th scope="col">Fecha apertura</th>
@@ -38,6 +56,7 @@
                   {% for caja_registro in cajas_registros_for %}
                   <tr>
                     <td>{{ forloop.counter }}</td>
+                    <td>{{ caja_registro.usuario_apertura.idsucursal.nombre_sucursal|default:"-" }}</td>
                     <td>{{ caja_registro.usuario_apertura.nombrecompleto }}</td>
                     <td>{{ caja_registro.usuario_cierre.nombrecompleto }}</td>
                     <td>{{ caja_registro.fecha_apertura }}</td>
