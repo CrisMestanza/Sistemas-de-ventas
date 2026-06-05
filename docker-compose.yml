@@ -1,3 +1,5 @@
+name: demo
+
 services:
   db:
     image: mysql:8.0
@@ -6,7 +8,7 @@ services:
       MYSQL_ROOT_PASSWORD: 72655883cristian
       MYSQL_DATABASE: facsiswave
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data_demo:/var/lib/mysql
       - ./init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
       - ./facsiswave.sql:/docker-entrypoint-initdb.d/02-facsiswave.sql
     ports:
@@ -46,8 +48,8 @@ services:
       DEBUG: "False"
     volumes:
       - ./media:/app/media
-      - static_volume:/var/www/static
+      - static_volume_demo:/var/www/static
 
 volumes:
-  mysql_data:
-  static_volume:
+  mysql_data_demo:
+  static_volume_demo:
