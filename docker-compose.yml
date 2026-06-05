@@ -23,13 +23,13 @@ services:
       dockerfile: Sistemas-de-ventas/docker-api/Dockerfile
     restart: always
     ports:
-      - "8009:80"
+      - "8001:80"
 
   web:
     build: .
     restart: always
     ports:
-      - "8001:8000"
+      - "8009:8000"
     depends_on:
       db:
         condition: service_healthy
